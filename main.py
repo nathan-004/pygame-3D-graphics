@@ -1,4 +1,5 @@
 import pygame
+import math
 
 from typing import NamedTuple
 
@@ -39,7 +40,8 @@ class Camera:
         points_2D = []
 
         for p in object.points:
-            proj = projection_perspective(p, d=300)
+            p_cam = Point(p.x - self.origine.x, p.y - self.origine.y, p.z - self.origine.z)
+            proj = projection_perspective(p_cam, d=300)
 
             x = proj.x + self.size[0] / 2
             y = -proj.y + self.size[1] / 2
@@ -51,7 +53,6 @@ class Camera:
 
 window = pygame.display.set_mode((1280, 720))
 pygame.display.set_caption("3d Graphics")
-
 
 camera = Camera(Point(0,0,0), Vector(0,0,1), (1280,720))
 
@@ -75,6 +76,11 @@ cube = Object(
     Point(0,0,0)
 )
 
+angle = 0
+distance = 5
+speed_rotation = 0.01
+speed_move = 0.05
+
 done = False
 
 while not done:
@@ -82,6 +88,32 @@ while not done:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             done = True
+
+    keys = pygame.key.get_pressed()
+
+    if keys[pygame.K_LEFT]:
+        angle -= speed_rotation
+
+    if keys[pygame.K_RIGHT]:
+        angle += speed_rotation
+
+    if keys[pygame.K_UP]:
+        distance -= speed_move
+
+    if keys[pygame.K_DOWN]:
+        distance += speed_move
+
+    camera.origine = Point(
+        distance * math.cos(angle),
+        0,
+        distance * math.sin(angle)
+    )
+
+    camera.direction = Vector(
+        -camera.origine.x,
+        -camera.origine.y,
+        -camera.origine.z
+    )
 
     camera.draw(window, cube)
 
