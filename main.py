@@ -12,22 +12,69 @@ class Point(NamedTuple):
     y: float
     z: float
 
+class Point2D(NamedTuple):
+    x: float
+    y: float
+
+def projection_perspective(p:Point, d:float) -> Point2D:
+    return Point2D(p.x * (d / p.z), p.y * (d / p.z))
+
 class Object:
-    def __init__(self, vertices:list, pos: Point):
-        self.vertices = vertices
+    def __init__(self, vertices:list, edges:list, pos: Point):
+        self._vertices = vertices
+        self.edges = edges
         self.pos = pos
+
+    @property
+    def points(self):
+        return [Point(point.x + self.pos.x, point.y + self.pos.y, point.z + self.pos.z) for point in self._vertices]
 
 class Camera:
     def __init__(self, origine:Point, direction: Vector, size:tuple):
         self.origine = origine
         self.direction = direction
         self.size = size
-        
+
     def draw(self, surface: pygame.Surface, object:Object):
-        pass
+        points_2D = []
+
+        for p in object.points:
+            proj = projection_perspective(p, d=300)
+
+            x = proj.x + self.size[0] / 2
+            y = -proj.y + self.size[1] / 2
+
+            points_2D.append((x, y))
+
+        for e in object.edges:
+            pygame.draw.line(surface, "white", points_2D[e[0]], points_2D[e[1]], 2)
 
 window = pygame.display.set_mode((1280, 720))
 pygame.display.set_caption("3d Graphics")
+
+
+camera = Camera(Point(0,0,0), Vector(0,0,1), (1280,720))
+
+cube = Object(
+    [
+        Point(-1,-1,4),
+        Point(1,-1,4),
+        Point(1,1,4),
+        Point(-1,1,4),
+
+        Point(-1,-1,6),
+        Point(1,-1,6),
+        Point(1,1,6),
+        Point(-1,1,6),
+    ],
+    [
+        (0,1),(1,2),(2,3),(3,0),
+        (4,5),(5,6),(6,7),(7,4),
+        (0,4),(1,5),(2,6),(3,7)
+    ],
+    Point(0,0,0)
+)
+
 done = False
 
 while not done:
@@ -35,6 +82,9 @@ while not done:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             done = True
+
+    camera.draw(window, cube)
+
     pygame.display.update()
 
 exit()
