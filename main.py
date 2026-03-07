@@ -1,13 +1,7 @@
 import pygame
-from math import atan, tan
+from math import atan, cos, sin, pi
 
-from typing import NamedTuple, Optional
-
-INSIDE = 0b0000
-LEFT = 0b0001
-RIGHT = 0b0010
-BOTTOM = 0b0100
-TOP = 0b1000
+from typing import NamedTuple
 
 class Vector:
     def __init__(self, x:float, y:float, z:float):
@@ -17,7 +11,7 @@ class Vector:
         if isinstance(other, Vector) or isinstance(other, Point):
             return type(other)(self.x * other.x, self.y * other.y, self.z * other.z)
         elif isinstance(other, float) or isinstance(other, int):
-            return (self.x * other, self.y * other, self.z * other)
+            return Vector(self.x * other, self.y * other, self.z * other)
         else:
             raise NotImplementedError(f"{type(other)} cannot be mutliplied with Vector")
         
@@ -36,6 +30,9 @@ class Vector:
             return (self.x - other, self.y - other, self.z - other)
         else:
             raise NotImplementedError(f"{type(other)} cannot be additioned with Vector")
+    
+    def __str__(self):
+        return f"Vector(x={self.x}, y={self.y}, z={self.z})"
 
 class Point(NamedTuple):
     x: float
@@ -171,6 +168,7 @@ class Camera:
 
 window = pygame.display.set_mode((1280, 720))
 pygame.display.set_caption("3d Graphics")
+pygame.mouse.set_visible(False)
 
 camera = Camera(Point(0,0,0), Vector(0,0,1), (1280,720))
 
@@ -197,7 +195,10 @@ cube = Object(
 speed_move = 0.01
 done = False
 
+f = 0
+
 while not done:
+    f += 1
     pygame.draw.rect(window, (0, 0, 0), (0, 0, 1280, 720))
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -205,20 +206,28 @@ while not done:
 
     keys = pygame.key.get_pressed()
 
-    if keys[pygame.K_LEFT]:
-        camera.direction = Vector(speed_move, 0, 0) + camera.direction
+    cur_a = 0
+    if keys[pygame.K_LEFT]: cur_a -= pi / 2
+    if keys[pygame.K_RIGHT]: cur_a += pi / 2
+    if keys[pygame.K_UP]: cur_a += 0.000001
+    if keys[pygame.K_DOWN]:cur_a -= pi
 
-    if keys[pygame.K_RIGHT]:
-        camera.direction = Vector(-speed_move, 0, 0) + camera.direction
+    rotated = Vector(
+        cos(cur_a) * camera.direction.x + sin(cur_a) * camera.direction.z,
+        0,
+        sin(cur_a) * -camera.direction.x + cos(cur_a) * camera.direction.z
+    )
 
-    if keys[pygame.K_UP]:
-        camera.origine = Vector(0, 0, speed_move) + camera.origine
-
-    if keys[pygame.K_DOWN]:
-        camera.origine = Vector(0, 0, -speed_move) + camera.origine
-
+    if cur_a != 0:
+        print(camera.origine)
+        camera.origine = rotated * speed_move + camera.origine
+ 
     camera.draw(window, cube)
-
+    
+    mov = pygame.mouse.get_rel()
+    camera.direction = Vector(speed_move * 2, speed_move * 2, speed_move * 2) * Vector(-max(min(mov[0], 1), -1), -max(min(mov[1], 1), -1), 0) + camera.direction
+    if f % 50 == 0:
+        pygame.mouse.set_pos((window.get_width() / 2, window.get_height() / 2))
     pygame.display.update()
 
 exit()
