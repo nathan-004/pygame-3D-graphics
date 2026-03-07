@@ -99,6 +99,28 @@ class Object:
     @property
     def points(self):
         return [Point(point.x + self.pos.x, point.y + self.pos.y, point.z + self.pos.z) for point in self._vertices]
+    
+class Cube(Object):
+    def __init__(self, l, pos):
+        vertices = [
+            Point(0, 0, 0),
+            Point(0, l, 0),
+            Point(l, l, 0),
+            Point(l, 0, 0),
+
+            Point(0, 0, l),
+            Point(0, l, l),
+            Point(l, l, l),
+            Point(l, 0, l)
+        ]
+
+        edges = [
+            (0,1),(1,2),(2,3),(3,0),
+            (4,5),(5,6),(6,7),(7,4),
+            (0,4),(1,5),(2,6),(3,7)
+        ]
+
+        super().__init__(vertices, edges, pos)
 
 class Camera:
     def __init__(self, origine:Point, direction: Vector, size:tuple):
@@ -172,27 +194,10 @@ pygame.mouse.set_visible(False)
 
 camera = Camera(Point(0,0,0), Vector(0,0,1), (1280,720))
 
-cube = Object(
-    [
-        Point(-1,-1,4),
-        Point(1,-1,4),
-        Point(1,1,4),
-        Point(-1,1,4),
+c1 = Cube(5, Point(1, 0, 6))
+c2 = Cube(10, Point(1, 0, 11))
 
-        Point(-1,-1,6),
-        Point(1,-1,6),
-        Point(1,1,6),
-        Point(-1,1,6),
-    ],
-    [
-        (0,1),(1,2),(2,3),(3,0),
-        (4,5),(5,6),(6,7),(7,4),
-        (0,4),(1,5),(2,6),(3,7)
-    ],
-    Point(0,0,0)
-)
-
-speed_move = 0.01
+speed_move = 0.007
 done = False
 
 f = 0
@@ -222,7 +227,8 @@ while not done:
         print(camera.origine)
         camera.origine = rotated * speed_move + camera.origine
  
-    camera.draw(window, cube)
+    camera.draw(window, c1)
+    camera.draw(window, c2)
     
     mov = pygame.mouse.get_rel()
     camera.direction = Vector(speed_move * 2, speed_move * 2, speed_move * 2) * Vector(-max(min(mov[0], 1), -1), -max(min(mov[1], 1), -1), 0) + camera.direction
