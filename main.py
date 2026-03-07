@@ -123,11 +123,22 @@ class Cube(Object):
         super().__init__(vertices, edges, pos)
 
 class Camera:
-    def __init__(self, origine:Point, direction: Vector, size:tuple):
+    def __init__(self, origine:Point, size:tuple, yaw:float = 0, pitch:float = 0):
         self.origine = origine
-        self.direction = direction
+
+        self.yaw = yaw # Rotation gauche/droite
+        self.pitch = pitch # Rotation haut/bas
+
         self.size = size
         self.d = 300
+
+    @property
+    def direction(self):
+        return normalize(Vector(
+            cos(self.pitch) * sin(self.yaw),
+            sin(self.pitch),
+            cos(self.pitch) * cos(self.yaw)
+        ))
 
     def draw(self, surface: pygame.Surface, object:Object):
         NEAR = 0.01
@@ -192,7 +203,7 @@ window = pygame.display.set_mode((1280, 720))
 pygame.display.set_caption("3d Graphics")
 pygame.mouse.set_visible(False)
 
-camera = Camera(Point(0,0,0), Vector(0,0,1), (1280,720))
+camera = Camera(Point(0,0,0), (1280,720))
 
 c1 = Cube(5, Point(1, 0, 6))
 c2 = Cube(10, Point(1, 0, 11))
@@ -231,7 +242,13 @@ while not done:
     camera.draw(window, c2)
     
     mov = pygame.mouse.get_rel()
-    camera.direction = Vector(speed_move * 2, speed_move * 2, speed_move * 2) * Vector(-max(min(mov[0], 1), -1), -max(min(mov[1], 1), -1), 0) + camera.direction
+    sens = 0.003
+
+    camera.yaw   -= mov[0] * sens
+    camera.pitch -= mov[1] * sens
+    MAX_PITCH = 1.55
+    camera.pitch = max(-MAX_PITCH, min(MAX_PITCH, camera.pitch))
+
     if f % 50 == 0:
         pygame.mouse.set_pos((window.get_width() / 2, window.get_height() / 2))
     pygame.display.update()
