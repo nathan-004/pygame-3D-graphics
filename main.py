@@ -42,6 +42,14 @@ class Point(NamedTuple):
     y: float
     z: float
 
+    def __sub__(self, other):
+        if isinstance(other, Vector) or isinstance(other, Point):
+            return Point(self.x - other.x, self.y - other.y, self.z - other.z)
+        elif isinstance(other, float) or isinstance(other, int):
+            return (self.x - other, self.y - other, self.z - other)
+        else:
+            raise NotImplementedError(f"{type(other)} cannot be additioned with Point")
+
 class Point2D(NamedTuple):
     x:float
     y:float
@@ -106,24 +114,18 @@ class Camera:
         NEAR = 0.01
 
         for e in object.edges:
-            p1 = object.points[e[0]]
-            p2 = object.points[e[1]]
+            p1 = self.world_to_camera(object.points[e[0]]) - self.origine
+            p2 = self.world_to_camera(object.points[e[1]]) - self.origine
 
-            p1 = Point(p1.x - self.origine.x, p1.y - self.origine.y, p1.z - self.origine.z)
-            p2 = Point(p2.x - self.origine.x, p2.y - self.origine.y, p2.z - self.origine.z)
-
-            # rejet complet
             if p1.z < NEAR and p2.z < NEAR:
                 continue
 
-            # clipping near
             if p1.z < NEAR:
                 p1 = intersect_near(p1, p2, NEAR)
 
             if p2.z < NEAR:
                 p2 = intersect_near(p2, p1, NEAR)
 
-            # projection
             p1_2d = projection_perspective(p1, self.d)
             p2_2d = projection_perspective(p2, self.d)
 
@@ -143,6 +145,25 @@ class Camera:
         y = -proj.y + self.size[1] / 2
 
         return Point2D(x, y)
+    
+    def world_to_camera(self, point):
+        forward = normalize(self.direction)
+        world_up = Vector(0,1,0)
+
+        right = normalize(cross(forward, world_up))
+        up = cross(right, forward)
+
+        rel = Vector(
+            point.x - self.origine.x,
+            point.y - self.origine.y,
+            point.z - self.origine.z
+        )
+
+        x = dot(rel, right)
+        y = dot(rel, up)
+        z = dot(rel, forward)
+
+        return Point(x, y, z)
 
     @property
     def fov_y(self):
@@ -185,10 +206,10 @@ while not done:
     keys = pygame.key.get_pressed()
 
     if keys[pygame.K_LEFT]:
-        camera.origine = Vector(-speed_move, 0, 0) + camera.origine
+        camera.direction = Vector(speed_move, 0, 0) + camera.direction
 
     if keys[pygame.K_RIGHT]:
-        camera.origine = Vector(speed_move, 0, 0) + camera.origine
+        camera.direction = Vector(-speed_move, 0, 0) + camera.direction
 
     if keys[pygame.K_UP]:
         camera.origine = Vector(0, 0, speed_move) + camera.origine
