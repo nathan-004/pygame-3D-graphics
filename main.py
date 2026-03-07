@@ -1,7 +1,13 @@
 import pygame
-from math import atan
+from math import atan, tan
 
 from typing import NamedTuple, Optional
+
+INSIDE = 0b0000
+LEFT = 0b0001
+RIGHT = 0b0010
+BOTTOM = 0b0100
+TOP = 0b1000
 
 class Vector:
     def __init__(self, x:float, y:float, z:float):
@@ -9,7 +15,7 @@ class Vector:
 
     def __mul__(self, other):
         if isinstance(other, Vector) or isinstance(other, Point):
-            return (self.x * other.x, self.y * other.y, self.z * other.z)
+            return type(other)(self.x * other.x, self.y * other.y, self.z * other.z)
         elif isinstance(other, float) or isinstance(other, int):
             return (self.x * other, self.y * other, self.z * other)
         else:
@@ -17,7 +23,7 @@ class Vector:
         
     def __add__(self, other):
         if isinstance(other, Vector) or isinstance(other, Point):
-            return (self.x + other.x, self.y + other.y, self.z + other.z)
+            return type(other)(self.x + other.x, self.y + other.y, self.z + other.z)
         elif isinstance(other, float) or isinstance(other, int):
             return (self.x + other, self.y + other, self.z + other)
         else:
@@ -37,8 +43,8 @@ class Point(NamedTuple):
     z: float
 
 class Point2D(NamedTuple):
-    x: float
-    y: float
+    x:float
+    y:float
 
 class Plan:
     def __init__(self, normal:Vector, d:float):
@@ -52,106 +58,6 @@ class Plan:
     def plane_from_point(normal, point):
         distance = -dot(normal, point)
         return Plan(normal, distance)
-
-class Frustrum:
-    def __init__(self, planes:list[Plan]):
-        self.planes = planes
-
-    def get_new_line(self, start_point: Point, end_point: Point) -> tuple[Point2D]:
-        for plane in self.planes:
-            d1, d2 = plane.distance(start_point), plane.distance(end_point)
-
-            if d1 < 0 and d2 < 0:
-                return None
-            
-            if d1 < 0 or d2 < 0:
-                t = d1 / (d1 - d2)
-
-                ix = start_point.x + t * (end_point.x - start_point.x)
-                iy = start_point.y + t * (end_point.y - start_point.y)
-                iz = start_point.z + t * (end_point.z - start_point.z)
-
-                intersection = Point(ix, iy, iz)
-
-                if d1 < 0:
-                    start_point = intersection
-                else:
-                    end_point = intersection
-
-        return start_point, end_point
-    
-    @staticmethod
-    def from_camera(camera):
-        # Calculer le centre du plan near
-        center_near = Point(
-            camera.origine.x + camera.direction.x * camera.d,
-            camera.origine.y + camera.direction.y * camera.d,
-            camera.origine.z + camera.direction.z * camera.d
-        )
-
-        # Vecteur up initial (arbitraire, souvent (0, 1, 0))
-        up_vector = Vector(0, 1, 0)
-
-        # Calculer le vecteur right
-        right_vector = cross(camera.direction, up_vector)
-        right_vector = normalize(right_vector)
-
-        # Recalculer le vecteur up orthogonal à la direction et à right_vector
-        up_vector = cross(right_vector, camera.direction)
-        up_vector = normalize(up_vector)
-
-        # Calculer les points pour chaque plan latéral
-        half_height = camera.size[1] / 2
-        half_width = camera.size[0] / 2
-
-        # Points pour les plans latéraux
-        top_point = Point(
-            center_near.x,
-            center_near.y + half_height,
-            center_near.z
-        )
-        bottom_point = Point(
-            center_near.x,
-            center_near.y - half_height,
-            center_near.z
-        )
-        right_point = Point(
-            center_near.x + half_width,
-            center_near.y,
-            center_near.z
-        )
-        left_point = Point(
-            center_near.x - half_width,
-            center_near.y,
-            center_near.z
-        )
-
-        # Créer les plans
-        planes = []
-
-        # Plan near
-        planes.append(Plan.plane_from_point(camera.direction, center_near))
-
-        # Plan haut
-        planes.append(Plan.plane_from_point(up_vector, top_point))
-
-        # Plan bas
-        planes.append(Plan.plane_from_point(Vector(-up_vector.x, -up_vector.y, -up_vector.z), bottom_point))
-
-        # Plan droite
-        planes.append(Plan.plane_from_point(right_vector, right_point))
-
-        # Plan gauche
-        planes.append(Plan.plane_from_point(Vector(-right_vector.x, -right_vector.y, -right_vector.z), left_point))
-
-        return Frustrum(planes)
-
-def add(p:Point, v:Vector):
-    return Point(
-        p.x + v.x,
-        p.y + v.y,
-        p.z + v.z
-    )
 
 def dot(v1:Vector, v2:Vector) -> float:
     return v1.x * v2.x + v1.y * v2.y + v1.z * v2.z
@@ -169,6 +75,15 @@ def normalize(v:Vector) -> Vector:
 
 def projection_perspective(p:Point, d:float) -> Point2D:
     return Point2D(p.x * (d / p.z), p.y * (d / p.z))
+
+def intersect_near(p1: Point, p2: Point, near:float):
+    t = (near - p1.z) / (p2.z - p1.z)
+
+    x = p1.x + t * (p2.x - p1.x)
+    y = p1.y + t * (p2.y - p1.y)
+    z = near
+
+    return Point(x, y, z)
 
 class Object:
     def __init__(self, vertices:list, edges:list, pos: Point):
@@ -188,25 +103,37 @@ class Camera:
         self.d = 300
 
     def draw(self, surface: pygame.Surface, object:Object):
-        points_2D = []
-        frustrum = Frustrum.from_camera(self)
-
-        for p in object.points:
-            points_2D.append((self.point_3D_to_2D(p), p))
+        NEAR = 0.01
 
         for e in object.edges:
-            p1, p1_original = points_2D[e[0]]
-            p2, p2_original = points_2D[e[1]]
-            
-            points = frustrum.get_new_line(p1_original, p2_original)
-            if points is None:
+            p1 = object.points[e[0]]
+            p2 = object.points[e[1]]
+
+            p1 = Point(p1.x - self.origine.x, p1.y - self.origine.y, p1.z - self.origine.z)
+            p2 = Point(p2.x - self.origine.x, p2.y - self.origine.y, p2.z - self.origine.z)
+
+            # rejet complet
+            if p1.z < NEAR and p2.z < NEAR:
                 continue
-            p1, p2 = points
-            p1_2d = self.point_3D_to_2D(p1)
-            p2_2d = self.point_3D_to_2D(p2)
 
-            pygame.draw.line(surface, "white", p1_2d, p2_2d, 2)
+            # clipping near
+            if p1.z < NEAR:
+                p1 = intersect_near(p1, p2, NEAR)
 
+            if p2.z < NEAR:
+                p2 = intersect_near(p2, p1, NEAR)
+
+            # projection
+            p1_2d = projection_perspective(p1, self.d)
+            p2_2d = projection_perspective(p2, self.d)
+
+            x1 = p1_2d.x + self.size[0] / 2
+            y1 = -p1_2d.y + self.size[1] / 2
+
+            x2 = p2_2d.x + self.size[0] / 2
+            y2 = -p2_2d.y + self.size[1] / 2
+
+            pygame.draw.line(surface, "white", (x1,y1), (x2,y2), 2)
 
     def point_3D_to_2D(self, point:Point) -> Point2D:
         p_cam = Point(point.x - self.origine.x, point.y - self.origine.y, point.z - self.origine.z)
@@ -258,16 +185,16 @@ while not done:
     keys = pygame.key.get_pressed()
 
     if keys[pygame.K_LEFT]:
-        camera.origine = add(camera.origine, Vector(-speed_move, 0, 0))
+        camera.origine = Vector(-speed_move, 0, 0) + camera.origine
 
     if keys[pygame.K_RIGHT]:
-        camera.origine = add(camera.origine, Vector(speed_move, 0, 0))
+        camera.origine = Vector(speed_move, 0, 0) + camera.origine
 
     if keys[pygame.K_UP]:
-        camera.origine = add(camera.origine, Vector(0, 0, speed_move))
+        camera.origine = Vector(0, 0, speed_move) + camera.origine
 
     if keys[pygame.K_DOWN]:
-        camera.origine = add(camera.origine, Vector(0, 0, -speed_move))
+        camera.origine = Vector(0, 0, -speed_move) + camera.origine
 
     camera.draw(window, cube)
 
