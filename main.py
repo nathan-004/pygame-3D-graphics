@@ -17,6 +17,13 @@ class Point2D(NamedTuple):
     x: float
     y: float
 
+def add(p:Point, v:Vector):
+    return Point(
+        p.x + v.x,
+        p.y + v.y,
+        p.z + v.z
+    )
+
 def projection_perspective(p:Point, d:float) -> Point2D:
     return Point2D(p.x * (d / p.z), p.y * (d / p.z))
 
@@ -46,10 +53,14 @@ class Camera:
             x = proj.x + self.size[0] / 2
             y = -proj.y + self.size[1] / 2
 
-            points_2D.append((x, y))
+            points_2D.append(((x, y), p_cam.z))
 
         for e in object.edges:
-            pygame.draw.line(surface, "white", points_2D[e[0]], points_2D[e[1]], 2)
+            p1, p1z = points_2D[e[0]]
+            p2, p2z = points_2D[e[1]]
+            if p1z < 0 or p2z < 0:
+                continue
+            pygame.draw.line(surface, "white", p1, p2, 2)
 
 window = pygame.display.set_mode((1280, 720))
 pygame.display.set_caption("3d Graphics")
@@ -76,11 +87,7 @@ cube = Object(
     Point(0,0,0)
 )
 
-angle = 0
-distance = 5
-speed_rotation = 0.01
-speed_move = 0.05
-
+speed_move = 0.01
 done = False
 
 while not done:
@@ -92,28 +99,16 @@ while not done:
     keys = pygame.key.get_pressed()
 
     if keys[pygame.K_LEFT]:
-        angle -= speed_rotation
+        camera.origine = add(camera.origine, Vector(-speed_move, 0, 0))
 
     if keys[pygame.K_RIGHT]:
-        angle += speed_rotation
+        camera.origine = add(camera.origine, Vector(speed_move, 0, 0))
 
     if keys[pygame.K_UP]:
-        distance -= speed_move
+        camera.origine = add(camera.origine, Vector(0, 0, speed_move))
 
     if keys[pygame.K_DOWN]:
-        distance += speed_move
-
-    camera.origine = Point(
-        distance * math.cos(angle),
-        0,
-        distance * math.sin(angle)
-    )
-
-    camera.direction = Vector(
-        -camera.origine.x,
-        -camera.origine.y,
-        -camera.origine.z
-    )
+        camera.origine = add(camera.origine, Vector(0, 0, -speed_move))
 
     camera.draw(window, cube)
 
