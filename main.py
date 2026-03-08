@@ -245,10 +245,10 @@ while not done:
         move = move - forward
 
     if keys[pygame.K_RIGHT]:
-        move = move + right
+        move = move - right
 
     if keys[pygame.K_LEFT]:
-        move = move - right
+        move = move + right
 
     if dot(move, move) != 0:
         move = normalize(move)
@@ -279,7 +279,7 @@ while not done:
     MAX_PITCH = 1.55
     camera.pitch = max(-MAX_PITCH, min(MAX_PITCH, camera.pitch))
 
-    if f % 50 == 0:
+    if f % 10 == 0:
         pygame.mouse.set_pos((window.get_width() / 2, window.get_height() / 2))
     pygame.display.update()
     clock.tick(60)
