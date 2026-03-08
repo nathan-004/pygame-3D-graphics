@@ -213,14 +213,19 @@ class Camera:
 window = pygame.display.set_mode((1280, 720))
 pygame.display.set_caption("3d Graphics")
 pygame.mouse.set_visible(False)
+pygame.font.init()
 
 camera = Camera(Point(0,0,0), (1280,720))
+
+clock = pygame.time.Clock()
+font = pygame.font.Font(None, 24)
 
 c1 = Cube(5, Point(1, 0, 6))
 c2 = Cube(10, Point(1, 0, 11))
 
-speed_move = 0.007
+speed_move = 0.1
 done = False
+debug = False
 
 f = 0
 
@@ -230,6 +235,9 @@ while not done:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             done = True
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_SPACE:
+                debug = not debug
 
     keys = pygame.key.get_pressed()
 
@@ -252,6 +260,19 @@ while not done:
 
     if dot(move, move) != 0:
         move = normalize(move)
+    
+    if debug:
+        fps = clock.get_fps()
+        origine_text = f"Origine: ({camera.origine.x:.2f}, {camera.origine.y:.2f}, {camera.origine.z:.2f})"
+        direction_text = f"Direction: ({camera.direction.x:.2f}, {camera.direction.y:.2f}, {camera.direction.z:.2f})"
+        
+        fps_surface = font.render(f"FPS: {fps:.1f}", True, (0, 255, 0))
+        origine_surface = font.render(origine_text, True, (0, 255, 0))
+        direction_surface = font.render(direction_text, True, (0, 255, 0))
+        
+        window.blit(fps_surface, (10, 10))
+        window.blit(origine_surface, (10, 35))
+        window.blit(direction_surface, (10, 60))
 
     camera.origine = move * speed_move + camera.origine
  
@@ -269,5 +290,6 @@ while not done:
     if f % 50 == 0:
         pygame.mouse.set_pos((window.get_width() / 2, window.get_height() / 2))
     pygame.display.update()
+    clock.tick(60)
 
 exit()
