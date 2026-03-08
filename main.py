@@ -19,15 +19,15 @@ class Vector:
         if isinstance(other, Vector) or isinstance(other, Point):
             return type(other)(self.x + other.x, self.y + other.y, self.z + other.z)
         elif isinstance(other, float) or isinstance(other, int):
-            return (self.x + other, self.y + other, self.z + other)
+            return Vector(self.x + other, self.y + other, self.z + other)
         else:
             raise NotImplementedError(f"{type(other)} cannot be additioned with Vector")
     
     def __sub__(self, other):
         if isinstance(other, Vector) or isinstance(other, Point):
-            return (self.x - other.x, self.y - other.y, self.z - other.z)
+            return type(other)(self.x - other.x, self.y - other.y, self.z - other.z)
         elif isinstance(other, float) or isinstance(other, int):
-            return (self.x - other, self.y - other, self.z - other)
+            return Vector(self.x - other, self.y - other, self.z - other)
         else:
             raise NotImplementedError(f"{type(other)} cannot be additioned with Vector")
     
@@ -43,7 +43,7 @@ class Point(NamedTuple):
         if isinstance(other, Vector) or isinstance(other, Point):
             return Point(self.x - other.x, self.y - other.y, self.z - other.z)
         elif isinstance(other, float) or isinstance(other, int):
-            return (self.x - other, self.y - other, self.z - other)
+            return Point(self.x - other, self.y - other, self.z - other)
         else:
             raise NotImplementedError(f"{type(other)} cannot be additioned with Point")
 
@@ -139,6 +139,20 @@ class Camera:
             sin(self.pitch),
             cos(self.pitch) * cos(self.yaw)
         ))
+    
+    @property
+    def view_matrix(self): 
+        forward = normalize(self.direction)
+        world_up = Vector(0,1,0)
+
+        right = normalize(cross(world_up, forward))
+        up = cross(forward, right)
+
+        return [
+            [right.x, right.y, right.z],
+            [up.x,    up.y,    up.z],
+            [forward.x, forward.y, forward.z]
+        ]
 
     def draw(self, surface: pygame.Surface, object:Object):
         NEAR = 0.01
@@ -177,11 +191,6 @@ class Camera:
         return Point2D(x, y)
     
     def world_to_camera(self, point):
-        forward = normalize(self.direction)
-        world_up = Vector(0,1,0)
-
-        right = normalize(cross(forward, world_up))
-        up = cross(right, forward)
 
         rel = Vector(
             point.x - self.origine.x,
@@ -189,11 +198,13 @@ class Camera:
             point.z - self.origine.z
         )
 
-        x = dot(rel, right)
-        y = dot(rel, up)
-        z = dot(rel, forward)
+        m = self.view_matrix
 
-        return Point(x, y, z)
+        x = rel.x*m[0][0] + rel.y*m[0][1] + rel.z*m[0][2]
+        y = rel.x*m[1][0] + rel.y*m[1][1] + rel.z*m[1][2]
+        z = rel.x*m[2][0] + rel.y*m[2][1] + rel.z*m[2][2]
+
+        return Point(x,y,z)
 
     @property
     def fov_y(self):
@@ -222,21 +233,27 @@ while not done:
 
     keys = pygame.key.get_pressed()
 
-    cur_a = 0
-    if keys[pygame.K_LEFT]: cur_a -= pi / 2
-    if keys[pygame.K_RIGHT]: cur_a += pi / 2
-    if keys[pygame.K_UP]: cur_a += 0.000001
-    if keys[pygame.K_DOWN]:cur_a -= pi
+    forward = normalize(camera.direction)
+    right = normalize(cross(forward, Vector(0,1,0)))
 
-    rotated = Vector(
-        cos(cur_a) * camera.direction.x + sin(cur_a) * camera.direction.z,
-        0,
-        sin(cur_a) * -camera.direction.x + cos(cur_a) * camera.direction.z
-    )
+    move = Vector(0,0,0)
 
-    if cur_a != 0:
-        print(camera.origine)
-        camera.origine = rotated * speed_move + camera.origine
+    if keys[pygame.K_UP]:
+        move = move + forward
+
+    if keys[pygame.K_DOWN]:
+        move = move - forward
+
+    if keys[pygame.K_RIGHT]:
+        move = move + right
+
+    if keys[pygame.K_LEFT]:
+        move = move - right
+
+    if dot(move, move) != 0:
+        move = normalize(move)
+
+    camera.origine = move * speed_move + camera.origine
  
     camera.draw(window, c1)
     camera.draw(window, c2)
@@ -244,7 +261,7 @@ while not done:
     mov = pygame.mouse.get_rel()
     sens = 0.003
 
-    camera.yaw   -= mov[0] * sens
+    camera.yaw   += mov[0] * sens
     camera.pitch -= mov[1] * sens
     MAX_PITCH = 1.55
     camera.pitch = max(-MAX_PITCH, min(MAX_PITCH, camera.pitch))
