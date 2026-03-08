@@ -1,5 +1,5 @@
 import pygame
-from math import atan, cos, sin, pi
+from math import atan, cos, sin
 
 from typing import NamedTuple
 
@@ -130,7 +130,7 @@ class Camera:
         self.pitch = pitch # Rotation haut/bas
 
         self.size = size
-        self.d = 300
+        self.d = 1
 
     @property
     def direction(self):
@@ -158,8 +158,8 @@ class Camera:
         NEAR = 0.01
 
         for e in object.edges:
-            p1 = self.world_to_camera(object.points[e[0]]) - self.origine
-            p2 = self.world_to_camera(object.points[e[1]]) - self.origine
+            p1 = self.world_to_camera(object.points[e[0]])
+            p2 = self.world_to_camera(object.points[e[1]])
 
             if p1.z < NEAR and p2.z < NEAR:
                 continue
@@ -173,22 +173,14 @@ class Camera:
             p1_2d = projection_perspective(p1, self.d)
             p2_2d = projection_perspective(p2, self.d)
 
-            x1 = p1_2d.x + self.size[0] / 2
-            y1 = -p1_2d.y + self.size[1] / 2
+            pygame.draw.line(surface, "white", self.screen(p1_2d, surface), self.screen(p2_2d, surface), 2)
 
-            x2 = p2_2d.x + self.size[0] / 2
-            y2 = -p2_2d.y + self.size[1] / 2
-
-            pygame.draw.line(surface, "white", (x1,y1), (x2,y2), 2)
-
-    def point_3D_to_2D(self, point:Point) -> Point2D:
-        p_cam = Point(point.x - self.origine.x, point.y - self.origine.y, point.z - self.origine.z)
-        proj = projection_perspective(p_cam, d=self.d)
-
-        x = proj.x + self.size[0] / 2
-        y = -proj.y + self.size[1] / 2
-
-        return Point2D(x, y)
+    def screen(self, p: Point2D, surface: pygame.Surface) -> Point2D:
+        w, h = surface.get_size()
+        return Point2D(
+            (p.x + 1) / 2 * w,
+            (1 - (p.y + 1) / 2) * h
+        )
     
     def world_to_camera(self, point):
 
@@ -220,8 +212,8 @@ camera = Camera(Point(0,0,0), (1280,720))
 clock = pygame.time.Clock()
 font = pygame.font.Font(None, 24)
 
-c1 = Cube(5, Point(1, 0, 6))
-c2 = Cube(10, Point(1, 0, 11))
+c1 = Cube(5, Point(0, 0, 6))
+c2 = Cube(10, Point(0, 0, 11))
 
 speed_move = 0.1
 done = False
