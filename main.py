@@ -186,10 +186,23 @@ class Camera:
             
         for points in object.faces:
             cam_points = [self.world_to_camera(object.points[point]) for point in points]
+
+            points_2D = []
+            i = 0
+        
+            for p1, p2 in zip(cam_points[:-1], cam_points[1:]):
+                if p1.z < NEAR and p2.z < NEAR:
+                    continue
+                if p1.z < NEAR:
+                    p1 = intersect_near(p1, p2, NEAR)
+                if p2.z < NEAR:
+                    p2 = intersect_near(p2, p1, NEAR)
+                
+                points_2D.append(self.screen(projection_perspective(p1, self.d), surface))
+                points_2D.append(self.screen(projection_perspective(p2, self.d), surface))
             
-            points_2D = [self.screen(projection_perspective(cam_point, self.d), surface) for cam_point in cam_points]
-            
-            pygame.draw.polygon(surface, "red", points_2D)
+            if len(points_2D) > 2:
+                pygame.draw.polygon(surface, "red", points_2D)
 
     def screen(self, p: Point2D, surface: pygame.Surface) -> Point2D:
         w, h = surface.get_size()
