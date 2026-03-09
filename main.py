@@ -207,7 +207,7 @@ pygame.display.set_caption("3d Graphics")
 pygame.mouse.set_visible(False)
 pygame.font.init()
 
-camera = Camera(Point(0,0,0), (1280,720))
+camera = Camera(Point(0,1,0), (1280,720))
 
 clock = pygame.time.Clock()
 font = pygame.font.Font(None, 24)
@@ -266,7 +266,7 @@ while not done:
         window.blit(origine_surface, (10, 35))
         window.blit(direction_surface, (10, 60))
 
-    camera.origine = move * speed_move + camera.origine
+    camera.origine = move * speed_move * Vector(1, 0, 1) + camera.origine
  
     camera.draw(window, c1)
     camera.draw(window, c2)
