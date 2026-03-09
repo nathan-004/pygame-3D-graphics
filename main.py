@@ -289,7 +289,12 @@ while not done:
 
     if dot(move, move) != 0:
         move = normalize(move)
-        
+
+    camera.origine = move * speed_move * Vector(1, 1, 1) + camera.origine
+ 
+    camera.draw(window, c1)
+    camera.draw(window, c2)
+
     if debug:
         fps = clock.get_fps()
         origine_text = f"Origine: ({camera.origine.x:.2f}, {camera.origine.y:.2f}, {camera.origine.z:.2f})"
@@ -302,11 +307,6 @@ while not done:
         window.blit(fps_surface, (10, 10))
         window.blit(origine_surface, (10, 35))
         window.blit(direction_surface, (10, 60))
-
-    camera.origine = move * speed_move * Vector(1, 1, 1) + camera.origine
- 
-    camera.draw(window, c1)
-    camera.draw(window, c2)
     
     mov = pygame.mouse.get_rel()
     sens = 0.003
