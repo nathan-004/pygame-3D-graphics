@@ -2,6 +2,7 @@ import pygame
 from math import atan, cos, sin
 
 from typing import NamedTuple
+from time import perf_counter
 
 class Vector:
     def __init__(self, x:float, y:float, z:float):
@@ -165,7 +166,8 @@ class Camera:
 
     def draw(self, surface: pygame.Surface, object:Object):
         NEAR = 0.01
-
+        
+        start_edges = perf_counter()
         for e in object.edges:
             p1 = self.world_to_camera(object.points[e[0]])
             p2 = self.world_to_camera(object.points[e[1]])
@@ -183,13 +185,20 @@ class Camera:
             p2_2d = projection_perspective(p2, self.d)
 
             pygame.draw.line(surface, "white", self.screen(p1_2d, surface), self.screen(p2_2d, surface), 2)
-            
+        end_edges = perf_counter()
+        print(f"Edges drawing duration : {end_edges - start_edges}")
+        
+        start_face = perf_counter()
         for points in object.faces:
+            start_cam = perf_counter()
             cam_points = [self.world_to_camera(object.points[point]) for point in points]
+            end_cam = perf_counter() 
+            #print(f"Camera conver duration : {end_cam - start_cam}")
 
             points_2D = []
             i = 0
-        
+            
+            start_point = perf_counter()
             for p1, p2 in zip(cam_points[:-1], cam_points[1:]):
                 if p1.z < NEAR and p2.z < NEAR:
                     continue
@@ -200,9 +209,16 @@ class Camera:
                 
                 points_2D.append(self.screen(projection_perspective(p1, self.d), surface))
                 points_2D.append(self.screen(projection_perspective(p2, self.d), surface))
+            end_point = perf_counter()
+            #print(f"Point calculation      : {end_point - start_point}")
             
+            start_polygon = perf_counter()
             if len(points_2D) > 2:
                 pygame.draw.polygon(surface, "red", points_2D)
+            end_polygon = perf_counter() 
+            print(f"Polygon drawing        : {end_polygon - start_polygon}")
+        end_face = perf_counter()
+        print(f"Faces drawing duration : {end_face-start_face}")
 
     def screen(self, p: Point2D, surface: pygame.Surface) -> Point2D:
         w, h = surface.get_size()
@@ -251,6 +267,7 @@ debug = False
 f = 0
 
 while not done:
+    start_frame = perf_counter()
     f += 1
     pygame.draw.rect(window, (0, 0, 0), (0, 0, 1280, 720))
     for event in pygame.event.get():
@@ -261,7 +278,7 @@ while not done:
                 debug = not debug
 
     keys = pygame.key.get_pressed()
-
+    
     forward = normalize(camera.direction)
     right = normalize(cross(forward, Vector(0,1,0)))
 
@@ -281,7 +298,7 @@ while not done:
 
     if dot(move, move) != 0:
         move = normalize(move)
-    
+        
     if debug:
         fps = clock.get_fps()
         origine_text = f"Origine: ({camera.origine.x:.2f}, {camera.origine.y:.2f}, {camera.origine.z:.2f})"
@@ -295,7 +312,7 @@ while not done:
         window.blit(origine_surface, (10, 35))
         window.blit(direction_surface, (10, 60))
 
-    camera.origine = move * speed_move * Vector(1, 0, 1) + camera.origine
+    camera.origine = move * speed_move * Vector(1, 1, 1) + camera.origine
  
     camera.draw(window, c1)
     camera.draw(window, c2)
@@ -311,6 +328,8 @@ while not done:
     if f % 2 == 0:
         pygame.mouse.set_pos((window.get_width() / 2, window.get_height() / 2))
     pygame.display.update()
+    end_frame = perf_counter()
+    print(f"Frame duration :         {end_frame - start_frame}")
     clock.tick(60)
 
 exit()
