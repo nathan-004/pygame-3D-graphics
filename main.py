@@ -91,10 +91,11 @@ def intersect_near(p1: Point, p2: Point, near:float):
     return Point(x, y, z)
 
 class Object:
-    def __init__(self, vertices:list, edges:list, pos: Point):
+    def __init__(self, vertices:list, edges:list, faces:list, pos: Point):
         self._vertices = vertices
         self.edges = edges
         self.pos = pos
+        self.faces = faces
 
     @property
     def points(self):
@@ -119,8 +120,16 @@ class Cube(Object):
             (4,5),(5,6),(6,7),(7,4),
             (0,4),(1,5),(2,6),(3,7)
         ]
+        
+        faces = [
+            (0, 1, 2, 3),
+            (4, 5, 6, 7),
+            
+            (0, 1, 5, 4),
+            (2, 3, 7, 6)
+        ]
 
-        super().__init__(vertices, edges, pos)
+        super().__init__(vertices, edges, faces, pos)
 
 class Camera:
     def __init__(self, origine:Point, size:tuple, yaw:float = 0, pitch:float = 0):
@@ -174,6 +183,13 @@ class Camera:
             p2_2d = projection_perspective(p2, self.d)
 
             pygame.draw.line(surface, "white", self.screen(p1_2d, surface), self.screen(p2_2d, surface), 2)
+            
+        for points in object.faces:
+            cam_points = [self.world_to_camera(object.points[point]) for point in points]
+            
+            points_2D = [self.screen(projection_perspective(cam_point, self.d), surface) for cam_point in cam_points]
+            
+            pygame.draw.polygon(surface, "red", points_2D)
 
     def screen(self, p: Point2D, surface: pygame.Surface) -> Point2D:
         w, h = surface.get_size()
@@ -279,7 +295,7 @@ while not done:
     MAX_PITCH = 1.55
     camera.pitch = max(-MAX_PITCH, min(MAX_PITCH, camera.pitch))
 
-    if f % 10 == 0:
+    if f % 2 == 0:
         pygame.mouse.set_pos((window.get_width() / 2, window.get_height() / 2))
     pygame.display.update()
     clock.tick(60)
