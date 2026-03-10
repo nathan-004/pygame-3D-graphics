@@ -210,7 +210,11 @@ class Camera:
             ]
 
             if len(points_2D) >= 3:
-                pygame.gfxdraw.filled_polygon(surface, points_2D, (255,0,0))
+                try:
+                    pygame.gfxdraw.textured_polygon(surface, points_2D, TEXTURE, 0, 0)
+                except pygame.error:
+                    print(points_2D)
+                #pygame.gfxdraw.filled_polygon(surface, points_2D, (255,0,0))
 
     def screen(self, p: Point2D, surface: pygame.Surface) -> Point2D:
         w, h = surface.get_size()
@@ -248,6 +252,7 @@ camera = Camera(Point(0,1,0), (1280,720))
 
 clock = pygame.time.Clock()
 font = pygame.font.Font(None, 24)
+TEXTURE = pygame.image.load("assets/texture_test.jpg")
 
 c1 = Cube(5, Point(0, 0, 6))
 c2 = Cube(10, Point(0, 0, 11))
