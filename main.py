@@ -267,11 +267,14 @@ while not done:
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_SPACE:
                 debug = not debug
+            if event.key == pygame.K_ESCAPE:
+                done = True
 
     keys = pygame.key.get_pressed()
     
     forward = normalize(camera.direction)
     right = normalize(cross(forward, Vector(0,1,0)))
+    top = normalize(cross(forward, Vector(1, 0, 0)))
 
     move = Vector(0,0,0)
 
@@ -286,6 +289,12 @@ while not done:
 
     if keys[pygame.K_LEFT]:
         move = move + right
+
+    if keys[pygame.K_LSHIFT]:
+        move = move + top
+
+    if keys[pygame.K_LCTRL]:
+        move = move - top
 
     if dot(move, move) != 0:
         move = normalize(move)
