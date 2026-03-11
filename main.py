@@ -238,13 +238,14 @@ class Camera:
                     for v in triangle:
                         p2d = projection_perspective(v, self.d)
                         screen_p = self.screen(p2d, surface)
-                        projected.append((screen_p.x, screen_p.y, v.z, v.u, v.v))
+                        projected.append(Point(screen_p.x, screen_p.y, v.z, v.u, v.v))
                     if object.texture:
-                        pass
-                        #draw_textured_triangle(surface, projected, object.texture)
+                        self.draw_triangle(surface, projected, object.texture)
                     else:
                         pygame.gfxdraw.filled_polygon(surface, projected, object.fill_color)
 
+    def draw_triangle(self, surface:pygame.Surface, points:list[Point], texture:pygame.Surface):     
+        pass
 
     def screen(self, p: Point2D, surface: pygame.Surface) -> Point2D:
         w, h = surface.get_size()
