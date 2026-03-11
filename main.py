@@ -10,6 +10,8 @@ class Vector:
 
     def __mul__(self, other):
         if isinstance(other, Vector) or isinstance(other, Point):
+            if isinstance(other, Point):
+                return Point(self.x * other.x, self.y * other.y, self.z * other.z, other.u, other.v)
             return type(other)(self.x * other.x, self.y * other.y, self.z * other.z)
         elif isinstance(other, float) or isinstance(other, int):
             return Vector(self.x * other, self.y * other, self.z * other)
@@ -18,6 +20,8 @@ class Vector:
         
     def __add__(self, other):
         if isinstance(other, Vector) or isinstance(other, Point):
+            if isinstance(other, Point):
+                return Point(self.x + other.x, self.y + other.y, self.z + other.z, other.u, other.v)
             return type(other)(self.x + other.x, self.y + other.y, self.z + other.z)
         elif isinstance(other, float) or isinstance(other, int):
             return Vector(self.x + other, self.y + other, self.z + other)
@@ -26,6 +30,8 @@ class Vector:
     
     def __sub__(self, other):
         if isinstance(other, Vector) or isinstance(other, Point):
+            if isinstance(other, Point):
+                return Point(self.x - other.x, self.y - other.y, self.z - other.z, other.u, other.v)
             return type(other)(self.x - other.x, self.y - other.y, self.z - other.z)
         elif isinstance(other, float) or isinstance(other, int):
             return Vector(self.x - other, self.y - other, self.z - other)
@@ -39,12 +45,14 @@ class Point(NamedTuple):
     x: float
     y: float
     z: float
+    u: float = 0
+    v: float = 0
 
     def __sub__(self, other):
         if isinstance(other, Vector) or isinstance(other, Point):
-            return Point(self.x - other.x, self.y - other.y, self.z - other.z)
+            return Point(self.x - other.x, self.y - other.y, self.z - other.z, self.u, self.v)
         elif isinstance(other, float) or isinstance(other, int):
-            return Point(self.x - other, self.y - other, self.z - other)
+            return Point(self.x - other, self.y - other, self.z - other, self.u, self.v)
         else:
             raise NotImplementedError(f"{type(other)} cannot be additioned with Point")
 
@@ -88,32 +96,40 @@ def intersect_near(p1: Point, p2: Point, near:float):
     x = p1.x + t * (p2.x - p1.x)
     y = p1.y + t * (p2.y - p1.y)
     z = near
+    u = p1.u + t * (p2.u - p1.u)
+    v = p1.v + t * (p2.v - p1.v)
 
-    return Point(x, y, z)
+    return Point(x, y, z, u, v)
 
 class Object:
-    def __init__(self, vertices:list, edges:list, faces:list, pos: Point):
+    def __init__(self, vertices:list, edges:list, faces:list, pos: Point, fill_color: pygame.Color = None, texture: pygame.Surface = None):
+        if fill_color is None and texture is None:
+            fill_color = (255, 0, 0)
+        assert fill_color is not None or texture is not None, "Une couleur ou une texture doit être spécifié"
+
         self._vertices = vertices
         self.edges = edges
         self.pos = pos
         self.faces = faces
+        self.fill_color = fill_color
+        self.texture = texture
 
     @property
     def points(self):
-        return [Point(point.x + self.pos.x, point.y + self.pos.y, point.z + self.pos.z) for point in self._vertices]
+        return [Point(point.x + self.pos.x, point.y + self.pos.y, point.z + self.pos.z, point.u, point.v) for point in self._vertices]
     
 class Cube(Object):
-    def __init__(self, l, pos):
+    def __init__(self, l, pos, color:pygame.Color = None, texture: pygame.Surface = None):
         vertices = [
-            Point(0, 0, 0),
-            Point(0, l, 0),
-            Point(l, l, 0),
-            Point(l, 0, 0),
+            Point(0, 0, 0, 0, 0),
+            Point(0, l, 0, 0, 1),
+            Point(l, l, 0, 1, 1),
+            Point(l, 0, 0, 1, 0),
 
-            Point(0, 0, l),
-            Point(0, l, l),
-            Point(l, l, l),
-            Point(l, 0, l)
+            Point(0, 0, l, 0, 0),
+            Point(0, l, l, 0, 1),
+            Point(l, l, l, 1, 1),
+            Point(l, 0, l, 1, 0)
         ]
 
         edges = [
@@ -130,7 +146,13 @@ class Cube(Object):
             (2, 3, 7, 6)
         ]
 
-        super().__init__(vertices, edges, faces, pos)
+        super().__init__(vertices, edges, faces, pos, color, texture)
+
+def face_to_triangles(points:list) -> list:
+    triangles = []
+    for i in range(1, len(points)-1):
+        triangles.append((points[0], points[i], points[i+1]))
+    return triangles
 
 class Camera:
     def __init__(self, origine:Point, size:tuple, yaw:float = 0, pitch:float = 0):
@@ -167,54 +189,62 @@ class Camera:
     def draw(self, surface: pygame.Surface, object:Object):
         NEAR = 0.5
         
+        self.draw_faces(surface, object, NEAR)
+        self.draw_edges(surface, object, NEAR)
+
+    def draw_edges(self, surface: pygame.Surface, object: Object, near:float):
         for e in object.edges:
             p1 = self.world_to_camera(object.points[e[0]])
             p2 = self.world_to_camera(object.points[e[1]])
 
-            if p1.z < NEAR and p2.z < NEAR:
+            if p1.z < near and p2.z < near:
                 continue
 
-            if p1.z < NEAR:
-                p1 = intersect_near(p1, p2, NEAR)
+            if p1.z < near:
+                p1 = intersect_near(p1, p2, near)
 
-            if p2.z < NEAR:
-                p2 = intersect_near(p2, p1, NEAR)
+            if p2.z < near:
+                p2 = intersect_near(p2, p1, near)
 
             p1_2d = projection_perspective(p1, self.d)
             p2_2d = projection_perspective(p2, self.d)
 
             pygame.draw.line(surface, "white", self.screen(p1_2d, surface), self.screen(p2_2d, surface), 2)
-        
+
+    def draw_faces(self, surface: pygame.Surface, object:Object, near: float):
         for points in object.faces:
             cam_points = [self.world_to_camera(object.points[i]) for i in points]
 
-            if all(p.z < NEAR for p in cam_points):
+            if all(p.z < near for p in cam_points):
                 continue
 
             clipped = []
 
             for p1, p2 in zip(cam_points, cam_points[1:] + cam_points[:1]):
-                if p1.z >= NEAR and p2.z >= NEAR:
+                if p1.z >= near and p2.z >= near:
                     clipped.append(p2)
 
-                elif p1.z >= NEAR and p2.z < NEAR:
-                    clipped.append(intersect_near(p1, p2, NEAR))
+                elif p1.z >= near and p2.z < near:
+                    clipped.append(intersect_near(p1, p2, near))
 
-                elif p1.z < NEAR and p2.z >= NEAR:
-                    clipped.append(intersect_near(p1, p2, NEAR))
+                elif p1.z < near and p2.z >= near:
+                    clipped.append(intersect_near(p1, p2, near))
                     clipped.append(p2)
-        
-            points_2D = [
-                self.screen(projection_perspective(p, self.d), surface)
-                for p in clipped
-            ]
 
-            if len(points_2D) >= 3:
-                try:
-                    pygame.gfxdraw.textured_polygon(surface, points_2D, TEXTURE, 0, 0)
-                except pygame.error:
-                    print(points_2D)
-                #pygame.gfxdraw.filled_polygon(surface, points_2D, (255,0,0))
+            if len(clipped) >= 3:
+                triangles = face_to_triangles(clipped)
+                for triangle in triangles:
+                    projected = []
+                    for v in triangle:
+                        p2d = projection_perspective(v, self.d)
+                        screen_p = self.screen(p2d, surface)
+                        projected.append((screen_p.x, screen_p.y, v.z, v.u, v.v))
+                    if object.texture:
+                        pass
+                        #draw_textured_triangle(surface, projected, object.texture)
+                    else:
+                        pygame.gfxdraw.filled_polygon(surface, projected, object.fill_color)
+
 
     def screen(self, p: Point2D, surface: pygame.Surface) -> Point2D:
         w, h = surface.get_size()
@@ -237,7 +267,7 @@ class Camera:
         y = rel.x*m[1][0] + rel.y*m[1][1] + rel.z*m[1][2]
         z = rel.x*m[2][0] + rel.y*m[2][1] + rel.z*m[2][2]
 
-        return Point(x,y,z)
+        return Point(x, y, z, point.u, point.v)
 
     @property
     def fov_y(self):
@@ -255,7 +285,7 @@ font = pygame.font.Font(None, 24)
 TEXTURE = pygame.image.load("assets/texture_test.jpg")
 
 c1 = Cube(5, Point(0, 0, 6))
-c2 = Cube(10, Point(0, 0, 11))
+c2 = Cube(10, Point(0, 0, 11), texture=TEXTURE)
 
 speed_move = 0.1
 done = False
