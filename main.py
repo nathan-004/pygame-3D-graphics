@@ -55,6 +55,16 @@ class Point(NamedTuple):
             return Point(self.x - other, self.y - other, self.z - other, self.u, self.v)
         else:
             raise NotImplementedError(f"{type(other)} cannot be additioned with Point")
+        
+    def __mul__(self, other):
+        if isinstance(other, Vector) or isinstance(other, Point):
+            if isinstance(other, Point):
+                return Point(self.x * other.x, self.y * other.y, self.z * other.z, other.u, other.v)
+            return type(other)(self.x * other.x, self.y * other.y, self.z * other.z)
+        elif isinstance(other, float) or isinstance(other, int):
+            return Vector(self.x * other, self.y * other, self.z * other)
+        else:
+            raise NotImplementedError(f"{type(other)} cannot be mutliplied with Vector")
 
 class Point2D(NamedTuple):
     x:float
@@ -154,6 +164,11 @@ def face_to_triangles(points:list) -> list:
         triangles.append((points[0], points[i], points[i+1]))
     return triangles
 
+def get_determinant(a: Point, b:Point, c:Point) -> float:
+    ab = b - a
+    ac = c - a
+    return 
+
 class Camera:
     def __init__(self, origine:Point, size:tuple, yaw:float = 0, pitch:float = 0):
         self.origine = origine
@@ -245,7 +260,12 @@ class Camera:
                         pygame.gfxdraw.filled_polygon(surface, projected, object.fill_color)
 
     def draw_triangle(self, surface:pygame.Surface, points:list[Point], texture:pygame.Surface):     
-        pass
+        xmin, ymin = min(points, key = lambda x: x.x).x, min(points, key = lambda x: x.y).y
+        xmax, ymax = max(points, key = lambda x: x.x).x, max(points, key = lambda x: x.y).y
+        
+        for y in range(ymin, ymax + 1):
+            for x in range(xmin, xmax + 1):
+                p = Point(x, y, 0)
 
     def screen(self, p: Point2D, surface: pygame.Surface) -> Point2D:
         w, h = surface.get_size()
@@ -255,7 +275,6 @@ class Camera:
         )
     
     def world_to_camera(self, point):
-
         rel = Vector(
             point.x - self.origine.x,
             point.y - self.origine.y,
