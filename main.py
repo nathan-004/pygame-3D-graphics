@@ -381,9 +381,9 @@ while not done:
 
     camera.origine = move * speed_move * Vector(1, 1, 1) + camera.origine
  
-    camera.draw(window, c1)
+    #camera.draw(window, c1)
     #camera.draw(window, c2)
-    #camera.draw(window, square)
+    camera.draw(window, square)
 
     if debug:
         fps = clock.get_fps()
