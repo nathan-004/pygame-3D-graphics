@@ -276,25 +276,20 @@ class Camera:
                     else:
                         pygame.gfxdraw.filled_polygon(surface, projected, object.fill_color)
 
-    def draw_triangle(self, surface:pygame.Surface, points:list[Point], texture:pygame.Surface):     
-        bbminx = min(min(points[0].x, points[1].x), points[2].x)
-        bbminy = min(min(points[0].y, points[1].y), points[2].y)
-        bbmaxx = max(max(points[0].x, points[1].x), points[2].x)
-        bbmaxy = max(max(points[0].y, points[1].y), points[2].y)
-        pixel_array = pygame.PixelArray(surface)
+    def draw_triangle(self, surface:pygame.Surface, points:list[Point], texture:pygame.Surface):    
+        points.sort(key= lambda x: (x.x**2 + x.y**2)**0.5)
+        p1 ,p2, p3 = points[0], points[1], points[2]
         
-        total_area = signed_triangle_area(points[0], points[1], points[2])
-        if total_area < 1 : return
-               
-        for x in range(int(bbminx), int(bbmaxx) + 1, 2):
-               for y in range(int(bbminy), int(bbmaxy) + 1, 2):
-                   alpha = signed_triangle_area(Point(x, y, 0), points[1], points[2]) / total_area
-                   beta = signed_triangle_area(Point(x, y, 0), points[2], points[0]) / total_area
-                   gamma = signed_triangle_area(Point(x, y, 0), points[0], points[1]) / total_area
-                   
-                   if alpha < 0 or beta < 0 or gamma < 0: continue
-                   pixel_array[x, y] = (0, 0, 255)
-        pixel_array.close()
+        if abs(p3.x - p1.x) > abs(p3.y - p1.y):
+            for x in range(int(min(p1.x, p3.x)), int(max(p1.x, p3.x)) + 1):
+                m = ((p1.y - p3.y) / (p1.x - p3.x))
+                y = m * (x - p3.x) + p3.y
+                pygame.draw.line(surface, (255, 0, 0), (int(x), int(y)), (p2.x, p2.y), 1) 
+        else:
+            for y in range(int(min(p1.y, p3.y)), int(max(p1.y, p3.y))+1):
+                m = ((p1.x - p3.x)/ (p1.y - p3.y)) # slope
+                x = m*(y - p3.y) + p3.x # rearranged point-slope formula 
+                pygame.draw.line(surface, (255, 0, 0), (int(x), int(y)), (p2.x, p2.y), 1)
     
     def screen(self, p: Point2D, surface: pygame.Surface) -> Point2D:
         w, h = surface.get_size()
@@ -335,11 +330,11 @@ TEXTURE = pygame.image.load("assets/texture_test.jpg")
 
 c1 = Cube(5, Point(0, 0, 6))
 c2 = Cube(10, Point(0, 0, 11), texture=TEXTURE)
-square = Square(5, Point(0, 0, 6), texture=TEXTURE)
+square = Square(1, Point(0, 0, 6), texture=TEXTURE)
 
 speed_move = 0.1
 done = False
-debug = False
+debug = True
 
 f = 0
 
@@ -386,9 +381,9 @@ while not done:
 
     camera.origine = move * speed_move * Vector(1, 1, 1) + camera.origine
  
-    #camera.draw(window, c1)
+    camera.draw(window, c1)
     #camera.draw(window, c2)
-    camera.draw(window, square)
+    #camera.draw(window, square)
 
     if debug:
         fps = clock.get_fps()
