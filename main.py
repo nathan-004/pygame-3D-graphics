@@ -93,6 +93,9 @@ def cross(v1:Vector, v2:Vector) -> Vector:
         v1.x * v2.y - v1.y * v2.x
     )
 
+def signed_triangle_area(p1: Point, p2: Point, p3:Point):
+    return abs(dot((p2 - p1) * Vector(1, 1, 0), (p3 - p2) * Vector(1, 1, 0)))
+
 def normalize(v:Vector) -> Vector:
     l = dot(v, v) ** 0.5
     return Vector(v.x/l, v.y/l, v.z/l)
@@ -274,31 +277,25 @@ class Camera:
                         pygame.gfxdraw.filled_polygon(surface, projected, object.fill_color)
 
     def draw_triangle(self, surface:pygame.Surface, points:list[Point], texture:pygame.Surface):     
-        points.sort(key = lambda x : x.y)
-        total_height = points[2].y - points[0].y
+        bbminx = min(min(points[0].x, points[1].x), points[2].x)
+        bbminy = min(min(points[0].y, points[1].y), points[2].y)
+        bbmaxx = max(max(points[0].x, points[1].x), points[2].x)
+        bbmaxy = max(max(points[0].y, points[1].y), points[2].y)
+        pixel_array = pygame.PixelArray(surface)
         
-        if points[0].y != points[1].y:
-            segment_height = points[1].y - points[0].y
-            for y in range(int(points[0].y), int(points[1].y), 2):
-                x1 = points[0].x + ((points[2].x - points[0].x) * (y - points[0].y)) / total_height
-                x2 = points[0].x + ((points[1].x - points[0].x) * (y - points[0].y)) / segment_height
-                for x in range(int(min(x1, x2)), int(max(x1, x2)), 2):
-                    surface.set_at((x, y), "blue")
-        
-        if points[1].y != points[2].y:
-            segment_height = points[2].y - points[1].y
-            for y in range(int(points[1].y), int(points[2].y), 2):
-                x1 = points[0].x + ((points[2].x - points[0].x) * (y - points[0].y)) / total_height
-                x2 = points[0].x + ((points[2].x - points[1].x) * (y - points[1].y)) / segment_height
-                for x in range(int(min(x1, x2)), int(max(x1, x2)), 2):
-                    surface.set_at((x, y), "blue")
-        
-        """  
-        pygame.draw.line(surface, "red", Point2D(points[0].x, points[0].y), Point2D(points[2].x, points[2].y), 2)
-        pygame.draw.line(surface, "green", Point2D(points[0].x, points[0].y), Point2D(points[1].x, points[1].y), 2)
-        pygame.draw.line(surface, "green", Point2D(points[1].x, points[1].y), Point2D(points[2].x, points[2].y), 2)
-        """
-        
+        total_area = signed_triangle_area(points[0], points[1], points[2])
+        if total_area < 1 : return
+               
+        for x in range(int(bbminx), int(bbmaxx) + 1, 2):
+               for y in range(int(bbminy), int(bbmaxy) + 1, 2):
+                   alpha = signed_triangle_area(Point(x, y, 0), points[1], points[2]) / total_area
+                   beta = signed_triangle_area(Point(x, y, 0), points[2], points[0]) / total_area
+                   gamma = signed_triangle_area(Point(x, y, 0), points[0], points[1]) / total_area
+                   
+                   if alpha < 0 or beta < 0 or gamma < 0: continue
+                   pixel_array[x, y] = (0, 0, 255)
+        pixel_array.close()
+    
     def screen(self, p: Point2D, surface: pygame.Surface) -> Point2D:
         w, h = surface.get_size()
         return Point2D(
