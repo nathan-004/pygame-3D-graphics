@@ -284,12 +284,12 @@ class Camera:
             for x in range(int(min(p1.x, p3.x)), int(max(p1.x, p3.x)) + 1):
                 m = ((p1.y - p3.y) / (p1.x - p3.x))
                 y = m * (x - p3.x) + p3.y
-                pygame.draw.line(surface, (255, 0, 0), (int(x), int(y)), (p2.x, p2.y), 1) 
+                pygame.gfxdraw.line(surface, int(x), int(y), int(p2.x), int(p2.y), (255, 0, 0)) 
         else:
             for y in range(int(min(p1.y, p3.y)), int(max(p1.y, p3.y))+1):
                 m = ((p1.x - p3.x)/ (p1.y - p3.y)) # slope
                 x = m*(y - p3.y) + p3.x # rearranged point-slope formula 
-                pygame.draw.line(surface, (255, 0, 0), (int(x), int(y)), (p2.x, p2.y), 1)
+                pygame.gfxdraw.line(surface, int(x), int(y), int(p2.x), int(p2.y), (255, 0, 0))
     
     def screen(self, p: Point2D, surface: pygame.Surface) -> Point2D:
         w, h = surface.get_size()
@@ -330,7 +330,7 @@ TEXTURE = pygame.image.load("assets/texture_test.jpg")
 
 c1 = Cube(5, Point(0, 0, 6))
 c2 = Cube(10, Point(0, 0, 11), texture=TEXTURE)
-square = Square(1, Point(0, 0, 6), texture=TEXTURE)
+square = Square(10, Point(0, 0, 6), texture=TEXTURE)
 
 speed_move = 0.1
 done = False
