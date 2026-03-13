@@ -114,7 +114,7 @@ def intersect_near(p1: Point, p2: Point, near:float):
 class Object:
     def __init__(self, vertices:list, edges:list, faces:list, pos: Point, fill_color: pygame.Color = None, texture: pygame.Surface = None):
         if fill_color is None and texture is None:
-            fill_color = (255, 0, 0)
+            fill_color = (0, 255, 255)
         assert fill_color is not None or texture is not None, "Une couleur ou une texture doit être spécifié"
 
         self._vertices = vertices
@@ -157,17 +157,31 @@ class Cube(Object):
         ]
 
         super().__init__(vertices, edges, faces, pos, color, texture)
+        
+class Square(Object):
+    def __init__(self, l, pos, color:pygame.Color = None, texture: pygame.Surface = None):
+        vertices = [
+            Point(0, 0, 0, 0, 0),
+            Point(0, l, 0, 0, 1),
+            Point(l, l, 0, 1, 1),
+            Point(l, 0, 0, 1, 0),
+        ]
+
+        edges = [
+            (0,1),(1,2),(2,3),(3,0),
+        ]
+        
+        faces = [
+            (0, 1, 2, 3),
+        ]
+
+        super().__init__(vertices, edges, faces, pos, color, texture)
 
 def face_to_triangles(points:list) -> list:
     triangles = []
     for i in range(1, len(points)-1):
         triangles.append((points[0], points[i], points[i+1]))
     return triangles
-
-def get_determinant(a: Point, b:Point, c:Point) -> float:
-    ab = b - a
-    ac = c - a
-    return 
 
 class Camera:
     def __init__(self, origine:Point, size:tuple, yaw:float = 0, pitch:float = 0):
@@ -204,8 +218,8 @@ class Camera:
     def draw(self, surface: pygame.Surface, object:Object):
         NEAR = 0.5
         
-        self.draw_faces(surface, object, NEAR)
         self.draw_edges(surface, object, NEAR)
+        self.draw_faces(surface, object, NEAR)
 
     def draw_edges(self, surface: pygame.Surface, object: Object, near:float):
         for e in object.edges:
@@ -260,13 +274,31 @@ class Camera:
                         pygame.gfxdraw.filled_polygon(surface, projected, object.fill_color)
 
     def draw_triangle(self, surface:pygame.Surface, points:list[Point], texture:pygame.Surface):     
-        xmin, ymin = min(points, key = lambda x: x.x).x, min(points, key = lambda x: x.y).y
-        xmax, ymax = max(points, key = lambda x: x.x).x, max(points, key = lambda x: x.y).y
+        points.sort(key = lambda x : x.y)
+        total_height = points[2].y - points[0].y
         
-        for y in range(ymin, ymax + 1):
-            for x in range(xmin, xmax + 1):
-                p = Point(x, y, 0)
-
+        if points[0].y != points[1].y:
+            segment_height = points[1].y - points[0].y
+            for y in range(int(points[0].y), int(points[1].y), 2):
+                x1 = points[0].x + ((points[2].x - points[0].x) * (y - points[0].y)) / total_height
+                x2 = points[0].x + ((points[1].x - points[0].x) * (y - points[0].y)) / segment_height
+                for x in range(int(min(x1, x2)), int(max(x1, x2)), 2):
+                    surface.set_at((x, y), "blue")
+        
+        if points[1].y != points[2].y:
+            segment_height = points[2].y - points[1].y
+            for y in range(int(points[1].y), int(points[2].y), 2):
+                x1 = points[0].x + ((points[2].x - points[0].x) * (y - points[0].y)) / total_height
+                x2 = points[0].x + ((points[2].x - points[1].x) * (y - points[1].y)) / segment_height
+                for x in range(int(min(x1, x2)), int(max(x1, x2)), 2):
+                    surface.set_at((x, y), "blue")
+        
+        """  
+        pygame.draw.line(surface, "red", Point2D(points[0].x, points[0].y), Point2D(points[2].x, points[2].y), 2)
+        pygame.draw.line(surface, "green", Point2D(points[0].x, points[0].y), Point2D(points[1].x, points[1].y), 2)
+        pygame.draw.line(surface, "green", Point2D(points[1].x, points[1].y), Point2D(points[2].x, points[2].y), 2)
+        """
+        
     def screen(self, p: Point2D, surface: pygame.Surface) -> Point2D:
         w, h = surface.get_size()
         return Point2D(
@@ -306,6 +338,7 @@ TEXTURE = pygame.image.load("assets/texture_test.jpg")
 
 c1 = Cube(5, Point(0, 0, 6))
 c2 = Cube(10, Point(0, 0, 11), texture=TEXTURE)
+square = Square(5, Point(0, 0, 6), texture=TEXTURE)
 
 speed_move = 0.1
 done = False
@@ -356,8 +389,9 @@ while not done:
 
     camera.origine = move * speed_move * Vector(1, 1, 1) + camera.origine
  
-    camera.draw(window, c1)
-    camera.draw(window, c2)
+    #camera.draw(window, c1)
+    #camera.draw(window, c2)
+    camera.draw(window, square)
 
     if debug:
         fps = clock.get_fps()
