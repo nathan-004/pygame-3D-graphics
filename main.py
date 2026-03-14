@@ -330,12 +330,24 @@ class Camera:
         tex_w = tex_pixels.shape[0]
         tex_h = tex_pixels.shape[1]
 
-        for y in range(ymin, ymax, N):
-            for x in range(xmin, xmax, N):
-                w1 = ((y2 - y3)*(x - x3) + (x3 - x2)*(y - y3)) * inv_denom
-                w2 = ((y3 - y1)*(x - x3) + (x1 - x3)*(y - y3)) * inv_denom
-                w3 = 1 - w1 - w2
+        # dérivées barycentriques
+        dw1_dx = (y2 - y3) * inv_denom
+        dw1_dy = (x3 - x2) * inv_denom
 
+        dw2_dx = (y3 - y1) * inv_denom
+        dw2_dy = (x1 - x3) * inv_denom
+
+        # point de départ
+        w1_row = ((y2 - y3)*(xmin - x3) + (x3 - x2)*(ymin - y3)) * inv_denom
+        w2_row = ((y3 - y1)*(xmin - x3) + (x1 - x3)*(ymin - y3)) * inv_denom
+
+        for y in range(ymin, ymax, N):
+
+            w1 = w1_row
+            w2 = w2_row
+            w3 = 1 - w1 - w2
+
+            for x in range(xmin, xmax, N):
                 if w1 >= 0 and w2 >= 0 and w3 >= 0:
 
                     u = w1*u1 + w2*u2 + w3*u3
@@ -347,6 +359,15 @@ class Camera:
                     color = tex_pixels[tx, ty]
 
                     pixels[x:x+N, y:y+N] = color
+
+                # incrément horizontal
+                w1 += dw1_dx * N
+                w2 += dw2_dx * N
+                w3 = 1 - w1 - w2
+
+            # incrément vertical
+            w1_row += dw1_dy * N
+            w2_row += dw2_dy * N
     
     def screen(self, p: Point2D, surface: pygame.Surface) -> Point2D:
         w, h = surface.get_size()
