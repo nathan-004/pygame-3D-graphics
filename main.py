@@ -276,20 +276,40 @@ class Camera:
                     else:
                         pygame.gfxdraw.filled_polygon(surface, projected, object.fill_color)
 
-    def draw_triangle(self, surface:pygame.Surface, points:list[Point], texture:pygame.Surface):    
-        points.sort(key= lambda x: (x.x**2 + x.y**2)**0.5)
-        p1 ,p2, p3 = points[0], points[1], points[2]
-        
-        if abs(p3.x - p1.x) > abs(p3.y - p1.y):
-            for x in range(int(min(p1.x, p3.x)), int(max(p1.x, p3.x)) + 1):
-                m = ((p1.y - p3.y) / (p1.x - p3.x))
-                y = m * (x - p3.x) + p3.y
-                pygame.gfxdraw.line(surface, int(x), int(y), int(p2.x), int(p2.y), (255, 0, 0)) 
-        else:
-            for y in range(int(min(p1.y, p3.y)), int(max(p1.y, p3.y))+1):
-                m = ((p1.x - p3.x)/ (p1.y - p3.y)) # slope
-                x = m*(y - p3.y) + p3.x # rearranged point-slope formula 
-                pygame.gfxdraw.line(surface, int(x), int(y), int(p2.x), int(p2.y), (255, 0, 0))
+    def draw_triangle(self, surface: pygame.Surface, points: list[Point], texture: pygame.Surface):
+        pixels = pygame.surfarray.pixels3d(surface)
+        width, height = surface.get_size()
+
+        p1, p2, p3 = sorted(points, key=lambda p: p.y)
+
+        def interp(pA, pB, y):
+            if pA.y == pB.y:
+                return pA.x
+            t = (y - pA.y) / (pB.y - pA.y)
+            return pA.x + t * (pB.x - pA.x)
+
+        for y in range(int(p1.y), int(p3.y)+1):
+
+            if y < 0 or y >= height:
+                continue
+
+            if y < p2.y:
+                x1 = interp(p1,p2,y)
+                x2 = interp(p1,p3,y)
+            else:
+                x1 = interp(p2,p3,y)
+                x2 = interp(p1,p3,y)
+
+            if x1 > x2:
+                x1, x2 = x2, x1
+
+            minx = max(0,int(x1))
+            maxx = min(width-1,int(x2))
+
+            for x in range(minx,maxx):
+                pixels[x,y] = (255,0,0)
+
+        del pixels
     
     def screen(self, p: Point2D, surface: pygame.Surface) -> Point2D:
         w, h = surface.get_size()
