@@ -282,6 +282,8 @@ class Camera:
         del texture_pixels
 
     def draw_triangle(self, pixels: pygame.surfarray.pixels3d, tex_pixels: pygame.surfarray.pixels3d, surface_size: tuple, v1: Point, v2: Point, v3: Point):
+        N = 4
+
         width, height = surface_size
         x1, y1, _, u1, v1t = v1
         x2, y2, _, u2, v2t = v2
@@ -302,9 +304,8 @@ class Camera:
         tex_w = tex_pixels.shape[0]
         tex_h = tex_pixels.shape[1]
 
-        for y in range(ymin, ymax):
-            for x in range(xmin, xmax):
-
+        for y in range(ymin, ymax, N):
+            for x in range(xmin, xmax, N):
                 w1 = ((y2 - y3)*(x - x3) + (x3 - x2)*(y - y3)) * inv_denom
                 w2 = ((y3 - y1)*(x - x3) + (x1 - x3)*(y - y3)) * inv_denom
                 w3 = 1 - w1 - w2
@@ -317,7 +318,9 @@ class Camera:
                     tx = int(u * (tex_w-1))
                     ty = int(v * (tex_h-1))
 
-                    pixels[x, y] = tex_pixels[tx, ty]
+                    color = tex_pixels[tx, ty]
+
+                    pixels[x:x+N, y:y+N] = color
     
     def screen(self, p: Point2D, surface: pygame.Surface) -> Point2D:
         w, h = surface.get_size()
