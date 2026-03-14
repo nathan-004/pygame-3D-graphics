@@ -244,6 +244,9 @@ class Camera:
             pygame.draw.line(surface, "white", self.screen(p1_2d, surface), self.screen(p2_2d, surface), 2)
 
     def draw_faces(self, surface: pygame.Surface, object:Object, near: float):
+        pixels = pygame.surfarray.pixels3d(surface)
+        if object.texture:
+            texture_pixels = pygame.surfarray.pixels3d(object.texture)
         for points in object.faces:
             cam_points = [self.world_to_camera(object.points[i]) for i in points]
 
@@ -272,44 +275,49 @@ class Camera:
                         screen_p = self.screen(p2d, surface)
                         projected.append(Point(screen_p.x, screen_p.y, v.z, v.u, v.v))
                     if object.texture:
-                        self.draw_triangle(surface, projected, object.texture)
+                        self.draw_triangle(pixels, texture_pixels, surface.get_size(), *projected)
                     else:
                         pygame.gfxdraw.filled_polygon(surface, projected, object.fill_color)
-
-    def draw_triangle(self, surface: pygame.Surface, points: list[Point], texture: pygame.Surface):
-        pixels = pygame.surfarray.pixels3d(surface)
-        width, height = surface.get_size()
-
-        p1, p2, p3 = sorted(points, key=lambda p: p.y)
-
-        def interp(pA, pB, y):
-            if pA.y == pB.y:
-                return pA.x
-            t = (y - pA.y) / (pB.y - pA.y)
-            return pA.x + t * (pB.x - pA.x)
-
-        for y in range(int(p1.y), int(p3.y)+1):
-
-            if y < 0 or y >= height:
-                continue
-
-            if y < p2.y:
-                x1 = interp(p1,p2,y)
-                x2 = interp(p1,p3,y)
-            else:
-                x1 = interp(p2,p3,y)
-                x2 = interp(p1,p3,y)
-
-            if x1 > x2:
-                x1, x2 = x2, x1
-
-            minx = max(0,int(x1))
-            maxx = min(width-1,int(x2))
-
-            for x in range(minx,maxx):
-                pixels[x,y] = (255,0,0)
-
         del pixels
+        del texture_pixels
+
+    def draw_triangle(self, pixels: pygame.surfarray.pixels3d, tex_pixels: pygame.surfarray.pixels3d, surface_size: tuple, v1: Point, v2: Point, v3: Point):
+        width, height = surface_size
+        x1, y1, _, u1, v1t = v1
+        x2, y2, _, u2, v2t = v2
+        x3, y3, _, u3, v3t = v3
+
+        xmin = max(0, int(min(x1, x2, x3)))
+        xmax = min(width - 1, int(max(x1, x2, x3)))
+
+        ymin = max(0, int(min(y1, y2, y3)))
+        ymax = min(height - 1, int(max(y1, y2, y3)))
+
+        denom = (y2 - y3)*(x1 - x3) + (x3 - x2)*(y1 - y3)
+        if denom == 0:
+            return
+
+        inv_denom = 1.0 / denom
+
+        tex_w = tex_pixels.shape[0]
+        tex_h = tex_pixels.shape[1]
+
+        for y in range(ymin, ymax):
+            for x in range(xmin, xmax):
+
+                w1 = ((y2 - y3)*(x - x3) + (x3 - x2)*(y - y3)) * inv_denom
+                w2 = ((y3 - y1)*(x - x3) + (x1 - x3)*(y - y3)) * inv_denom
+                w3 = 1 - w1 - w2
+
+                if w1 >= 0 and w2 >= 0 and w3 >= 0:
+
+                    u = w1*u1 + w2*u2 + w3*u3
+                    v = w1*v1t + w2*v2t + w3*v3t
+
+                    tx = int(u * (tex_w-1))
+                    ty = int(v * (tex_h-1))
+
+                    pixels[x, y] = tex_pixels[tx, ty]
     
     def screen(self, p: Point2D, surface: pygame.Surface) -> Point2D:
         w, h = surface.get_size()
