@@ -308,12 +308,12 @@ class Camera:
             del texture_pixels
 
     def draw_triangle(self, pixels: pygame.surfarray.pixels3d, tex_pixels: pygame.surfarray.pixels3d, surface_size: tuple, v1: Point, v2: Point, v3: Point):
-        N = 2
+        N = 4
 
         width, height = surface_size
-        x1, y1, _, u1, v1t = v1
-        x2, y2, _, u2, v2t = v2
-        x3, y3, _, u3, v3t = v3
+        x1, y1, z1, u1, v1t = v1
+        x2, y2, z2, u2, v2t = v2
+        x3, y3, z3, u3, v3t = v3
 
         xmin = max(0, int(min(x1, x2, x3)))
         xmax = min(width - 1, int(max(x1, x2, x3)))
@@ -342,16 +342,30 @@ class Camera:
         w2_row = ((y3 - y1)*(xmin - x3) + (x1 - x3)*(ymin - y3)) * inv_denom
 
         for y in range(ymin, ymax, N):
-
             w1 = w1_row
             w2 = w2_row
             w3 = 1 - w1 - w2
 
             for x in range(xmin, xmax, N):
                 if w1 >= 0 and w2 >= 0 and w3 >= 0:
+                    u1z = u1 / z1
+                    v1z = v1t / z1
+                    iz1 = 1 / z1
 
-                    u = w1*u1 + w2*u2 + w3*u3
-                    v = w1*v1t + w2*v2t + w3*v3t
+                    u2z = u2 / z2
+                    v2z = v2t / z2
+                    iz2 = 1 / z2
+
+                    u3z = u3 / z3
+                    v3z = v3t / z3
+                    iz3 = 1 / z3
+
+                    uz = w1*u1z + w2*u2z + w3*u3z
+                    vz = w1*v1z + w2*v2z + w3*v3z
+                    iz = w1*iz1 + w2*iz2 + w3*iz3
+
+                    u = uz / iz
+                    v = vz / iz
 
                     tx = int(u * (tex_w-1))
                     ty = int((1.0 - v) * (tex_h-1))
