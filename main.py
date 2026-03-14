@@ -348,21 +348,9 @@ class Camera:
 
             for x in range(xmin, xmax, N):
                 if w1 >= 0 and w2 >= 0 and w3 >= 0:
-                    u1z = u1 / z1
-                    v1z = v1t / z1
-                    iz1 = 1 / z1
-
-                    u2z = u2 / z2
-                    v2z = v2t / z2
-                    iz2 = 1 / z2
-
-                    u3z = u3 / z3
-                    v3z = v3t / z3
-                    iz3 = 1 / z3
-
-                    uz = w1*u1z + w2*u2z + w3*u3z
-                    vz = w1*v1z + w2*v2z + w3*v3z
-                    iz = w1*iz1 + w2*iz2 + w3*iz3
+                    uz = w1*(u1/z1) + w2*(u2 / z2) + w3*(u3 / z3)
+                    vz = w1*(v1t/z1) + w2*(v2t/z2) + w3*(v3t/z3)
+                    iz = w1*(1/z1) + w2*(1/z2) + w3*(1/z3)
 
                     u = uz / iz
                     v = vz / iz
@@ -425,7 +413,7 @@ c2 = Cube(10, Point(0, 0, 11), texture=TEXTURE)
 s1 = Square(10, Point(-5, 0, 15), texture=TEXTURE, rotation_y=radians(90))
 s2 = Square(10, Point(-5, 0, 15), texture=TEXTURE)
 
-speed_move = 0.1
+speed_move = 3
 done = False
 debug = True
 
@@ -433,6 +421,7 @@ f = 0
 
 while not done:
     f += 1
+    fps = clock.get_fps()
     pygame.draw.rect(window, (0, 0, 0), (0, 0, 1280, 720))
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -471,8 +460,6 @@ while not done:
 
     if dot(move, move) != 0:
         move = normalize(move)
-
-    camera.origine = move * speed_move * Vector(1, 1, 1) + camera.origine
  
     #camera.draw(window, c1)
     #camera.draw(window, c2)
@@ -480,7 +467,6 @@ while not done:
     camera.draw(window, s2)
 
     if debug:
-        fps = clock.get_fps()
         origine_text = f"Origine: ({camera.origine.x:.2f}, {camera.origine.y:.2f}, {camera.origine.z:.2f})"
         direction_text = f"Direction: ({camera.direction.x:.2f}, {camera.direction.y:.2f}, {camera.direction.z:.2f})"
         
@@ -503,6 +489,8 @@ while not done:
     if f % 2 == 0:
         pygame.mouse.set_pos((window.get_width() / 2, window.get_height() / 2))
     pygame.display.update()
-    clock.tick(60)
+
+    dt = clock.tick(60) / 1000
+    camera.origine = move * dt * speed_move * Vector(1, 1, 1) + camera.origine
 
 exit()
