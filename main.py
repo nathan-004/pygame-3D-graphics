@@ -279,7 +279,8 @@ class Camera:
                     else:
                         pygame.gfxdraw.filled_polygon(surface, projected, object.fill_color)
         del pixels
-        del texture_pixels
+        if object.texture:
+            del texture_pixels
 
     def draw_triangle(self, pixels: pygame.surfarray.pixels3d, tex_pixels: pygame.surfarray.pixels3d, surface_size: tuple, v1: Point, v2: Point, v3: Point):
         N = 4
