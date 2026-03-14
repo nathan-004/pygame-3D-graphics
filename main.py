@@ -1,6 +1,6 @@
 import pygame
 import pygame.gfxdraw
-from math import atan, cos, sin
+from math import atan, cos, sin, radians
 
 from typing import NamedTuple
 
@@ -162,13 +162,16 @@ class Cube(Object):
         super().__init__(vertices, edges, faces, pos, color, texture)
         
 class Square(Object):
-    def __init__(self, l, pos, color:pygame.Color = None, texture: pygame.Surface = None):
+    def __init__(self, l, pos, color:pygame.Color = None, texture: pygame.Surface = None, rotation_x:float = 0, rotation_y:float = 0, rotation_z:float = 0):
         vertices = [
             Point(0, 0, 0, 0, 0),
             Point(0, l, 0, 0, 1),
             Point(l, l, 0, 1, 1),
             Point(l, 0, 0, 1, 0),
         ]
+
+        # Appliquer les rotations
+        vertices = self._rotate_vertices(vertices, rotation_x, rotation_y, rotation_z)
 
         edges = [
             (0,1),(1,2),(2,3),(3,0),
@@ -179,6 +182,28 @@ class Square(Object):
         ]
 
         super().__init__(vertices, edges, faces, pos, color, texture)
+
+    @staticmethod
+    def _rotate_vertices(vertices, rot_x, rot_y, rot_z):
+        """Applique les rotations (en radians) aux vertices"""
+        rotated = []
+        
+        for v in vertices:
+            # Rotation autour de X
+            y = v.y * cos(rot_x) - v.z * sin(rot_x)
+            z = v.y * sin(rot_x) + v.z * cos(rot_x)
+            
+            # Rotation autour de Y
+            x = v.x * cos(rot_y) + z * sin(rot_y)
+            z = -v.x * sin(rot_y) + z * cos(rot_y)
+            
+            # Rotation autour de Z
+            x_new = x * cos(rot_z) - y * sin(rot_z)
+            y = x * sin(rot_z) + y * cos(rot_z)
+            
+            rotated.append(Point(x_new, y, z, v.u, v.v))
+        
+        return rotated
 
 def face_to_triangles(points:list) -> list:
     triangles = []
@@ -283,7 +308,7 @@ class Camera:
             del texture_pixels
 
     def draw_triangle(self, pixels: pygame.surfarray.pixels3d, tex_pixels: pygame.surfarray.pixels3d, surface_size: tuple, v1: Point, v2: Point, v3: Point):
-        N = 4
+        N = 2
 
         width, height = surface_size
         x1, y1, _, u1, v1t = v1
@@ -317,7 +342,7 @@ class Camera:
                     v = w1*v1t + w2*v2t + w3*v3t
 
                     tx = int(u * (tex_w-1))
-                    ty = int(v * (tex_h-1))
+                    ty = int((1.0 - v) * (tex_h-1))
 
                     color = tex_pixels[tx, ty]
 
@@ -362,7 +387,8 @@ TEXTURE = pygame.image.load("assets/texture_test.jpg")
 
 c1 = Cube(5, Point(0, 0, 6))
 c2 = Cube(10, Point(0, 0, 11), texture=TEXTURE)
-square = Square(10, Point(0, 0, 6), texture=TEXTURE)
+s1 = Square(10, Point(-5, 0, 15), texture=TEXTURE, rotation_y=radians(90))
+s2 = Square(10, Point(-5, 0, 15), texture=TEXTURE)
 
 speed_move = 0.1
 done = False
@@ -415,7 +441,8 @@ while not done:
  
     #camera.draw(window, c1)
     #camera.draw(window, c2)
-    camera.draw(window, square)
+    camera.draw(window, s1)
+    camera.draw(window, s2)
 
     if debug:
         fps = clock.get_fps()
