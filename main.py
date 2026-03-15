@@ -220,6 +220,7 @@ class Camera:
 
         self.size = size
         self.d = 1
+        self.N = 4
 
     @property
     def direction(self):
@@ -242,6 +243,13 @@ class Camera:
             [up.x,    up.y,    up.z],
             [forward.x, forward.y, forward.z]
         ]
+
+    def draw_world(self, surface:pygame.Surface, objects: list[Object]):
+        camera_plane = Plan.plane_from_point(self.direction, self.origine)
+        objects = sorted(objects, key= lambda x: camera_plane.distance(x.pos), reverse=True)
+
+        for obj in objects:
+            self.draw(surface, obj)
 
     def draw(self, surface: pygame.Surface, object:Object):
         NEAR = 0.5
@@ -308,7 +316,7 @@ class Camera:
             del texture_pixels
 
     def draw_triangle(self, pixels: pygame.surfarray.pixels3d, tex_pixels: pygame.surfarray.pixels3d, surface_size: tuple, v1: Point, v2: Point, v3: Point):
-        N = 4
+        N = self.N
 
         width, height = surface_size
         x1, y1, z1, u1, v1t = v1
@@ -412,6 +420,9 @@ c1 = Cube(5, Point(0, 0, 6))
 c2 = Cube(10, Point(0, 0, 11), texture=TEXTURE)
 s1 = Square(10, Point(-5, 0, 15), texture=TEXTURE, rotation_y=radians(90))
 s2 = Square(10, Point(-5, 0, 15), texture=TEXTURE)
+s3 = Square(10, Point(5, 0, 15), texture=TEXTURE, rotation_y=radians(90))
+
+world = [s1, s2, s3]
 
 speed_move = 3
 done = False
@@ -461,10 +472,7 @@ while not done:
     if dot(move, move) != 0:
         move = normalize(move)
  
-    #camera.draw(window, c1)
-    #camera.draw(window, c2)
-    camera.draw(window, s1)
-    camera.draw(window, s2)
+    camera.draw_world(window, world)
 
     if debug:
         origine_text = f"Origine: ({camera.origine.x:.2f}, {camera.origine.y:.2f}, {camera.origine.z:.2f})"
