@@ -134,16 +134,35 @@ class Object:
 class Cube(Object):
     def __init__(self, l, pos, color:pygame.Color = None, texture: pygame.Surface = None):
         vertices = [
+            # Front
             Point(0, 0, 0, 0, 0),
             Point(0, l, 0, 0, 1),
             Point(l, l, 0, 1, 1),
             Point(l, 0, 0, 1, 0),
 
+            # Back
             Point(0, 0, l, 0, 0),
             Point(0, l, l, 0, 1),
             Point(l, l, l, 1, 1),
-            Point(l, 0, l, 1, 0)
+            Point(l, 0, l, 1, 0),
+
+            # Left
+            Point(0, l, l, 1, 1),
+            Point(0, 0, l, 1, 0),
+
+            # Right
+            Point(l, 0, 0, 0, 0),
+            Point(l, l, 0, 0, 1),
+
+            # Top
+            Point(0, l, 0, 0, 0),
+            Point(l, l, 0, 1, 0),
+
+            # Bottom
+            Point(0, 0, l, 0, 1),
+            Point(l, 0, l, 1, 1),
         ]
+
 
         edges = [
             (0,1),(1,2),(2,3),(3,0),
@@ -152,11 +171,14 @@ class Cube(Object):
         ]
         
         faces = [
-            (0, 1, 2, 3),
-            (4, 5, 6, 7),
+            (0, 1, 2, 3), # Front
+            (4, 5, 6, 7), # Back
             
-            (0, 1, 5, 4),
-            (2, 3, 7, 6)
+            (0, 1, 8, 9), # Left
+            (11, 10, 7, 6), # Right
+            
+            (12, 5, 6, 13), # Top
+            (0, 14, 15, 3)
         ]
 
         super().__init__(vertices, edges, faces, pos, color, texture)
@@ -419,10 +441,10 @@ TEXTURE = pygame.image.load("assets/texture_test.jpg")
 c1 = Cube(5, Point(0, 0, 6))
 c2 = Cube(10, Point(0, 0, 11), texture=TEXTURE)
 s1 = Square(10, Point(-5, 0, 15), texture=TEXTURE, rotation_y=radians(90))
-s2 = Square(10, Point(-5, 0, 15), texture=TEXTURE)
+s2 = Square(10, Point(-5.0001, 0.0001, 15.001), texture=TEXTURE)
 s3 = Square(10, Point(5, 0, 15), texture=TEXTURE, rotation_y=radians(90))
 
-world = [s1, s2, s3]
+world = [c2]
 
 speed_move = 3
 done = False
@@ -433,7 +455,7 @@ f = 0
 while not done:
     f += 1
     fps = clock.get_fps()
-    pygame.draw.rect(window, (0, 0, 0), (0, 0, 1280, 720))
+    pygame.draw.rect(window, (0, 100, 255), (0, 0, 1280, 720))
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             done = True
@@ -447,20 +469,20 @@ while not done:
     
     forward = normalize(camera.direction)
     right = normalize(cross(forward, Vector(0,1,0)))
-    top = normalize(cross(forward, Vector(1, 0, 0)))
+    top = Vector(0, 1, 0)
 
     move = Vector(0,0,0)
 
-    if keys[pygame.K_UP]:
+    if keys[pygame.K_UP] or keys[pygame.K_z]:
         move = move + forward
 
-    if keys[pygame.K_DOWN]:
+    if keys[pygame.K_DOWN] or keys[pygame.K_s]:
         move = move - forward
 
-    if keys[pygame.K_RIGHT]:
+    if keys[pygame.K_RIGHT] or keys[pygame.K_d]:
         move = move - right
 
-    if keys[pygame.K_LEFT]:
+    if keys[pygame.K_LEFT] or keys[pygame.K_q]:
         move = move + right
 
     if keys[pygame.K_LSHIFT]:
@@ -487,10 +509,11 @@ while not done:
         window.blit(direction_surface, (10, 60))
     
     mov = pygame.mouse.get_rel()
-    sens = 0.003
+    sens = 0.03
+    dt = clock.tick(60) / 1000
 
-    camera.yaw   += mov[0] * sens
-    camera.pitch -= mov[1] * sens
+    camera.yaw   += mov[0] * sens * dt
+    camera.pitch -= mov[1] * sens * dt
     MAX_PITCH = 1.55
     camera.pitch = max(-MAX_PITCH, min(MAX_PITCH, camera.pitch))
 
@@ -498,7 +521,7 @@ while not done:
         pygame.mouse.set_pos((window.get_width() / 2, window.get_height() / 2))
     pygame.display.update()
 
-    dt = clock.tick(60) / 1000
     camera.origine = move * dt * speed_move * Vector(1, 1, 1) + camera.origine
 
 exit()
+
