@@ -4,6 +4,8 @@ from math import atan, cos, sin, radians
 
 from typing import NamedTuple
 
+from map import Map
+
 class Vector:
     def __init__(self, x:float, y:float, z:float):
         self.x, self.y, self.z = x, y, z
@@ -445,13 +447,15 @@ class Camera:
     def fov_y(self):
         return 2 * atan(self.size[1] / 2 / self.d)
 
-window = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
+map = Map.random((10, 10))
+
+window = pygame.display.set_mode((1280, 780)) # (0, 0), pygame.FULLSCREEN
+map_surface = pygame.Surface((500, 150))
 pygame.display.set_caption("3d Graphics")
 pygame.mouse.set_visible(False)
 pygame.font.init()
 
-info = pygame.display.Info()
-camera = Camera(Point(0,1,0), (info.current_w, info.current_h))
+camera = Camera(Point(0,1,0), (window.get_width(), window.get_height()))
 
 clock = pygame.time.Clock()
 font = pygame.font.Font(None, 24)
@@ -474,7 +478,7 @@ f = 0
 while not done:
     f += 1
     fps = clock.get_fps()
-    pygame.draw.rect(window, (0, 100, 255), (0, 0, info.current_w, info.current_h))
+    pygame.draw.rect(window, (0, 100, 255), (0, 0, window.get_width(), window.get_height()))
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             done = True
@@ -527,6 +531,9 @@ while not done:
         window.blit(origine_surface, (10, 35))
         window.blit(direction_surface, (10, 60))
     
+        map.draw(map_surface)
+        window.blit(map_surface, (10, 80))
+
     mov = pygame.mouse.get_rel()
     sens = 0.03
     dt = clock.tick(60) / 1000
