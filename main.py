@@ -1,7 +1,8 @@
 import pygame
 import pygame.gfxdraw
-from math import atan, cos, sin, radians
 
+from math import atan, cos, sin, radians
+from math import ceil, floor
 from typing import NamedTuple
 
 from map import Map
@@ -245,7 +246,7 @@ class Camera:
 
         self.size = size
         self.d = 1
-        self.N = 4
+        self.N = 6
         
         self.textures = {}
 
@@ -455,14 +456,14 @@ pygame.display.set_caption("3d Graphics")
 pygame.mouse.set_visible(False)
 pygame.font.init()
 
-camera = Camera(Point(0,1,0), (window.get_width(), window.get_height()))
+camera = Camera(Point(1,1,1), (window.get_width(), window.get_height()))
 
 clock = pygame.time.Clock()
 font = pygame.font.Font(None, 24)
 TEXTURE = pygame.image.load("assets/texture_test.jpg")
+L = 5
 
 def get_cubes(map: Map) -> list:
-    L = 5
     cubes = []
     for y, row in enumerate(map.map):
         for x, room in enumerate(row):
@@ -473,6 +474,23 @@ def get_cubes(map: Map) -> list:
                         TEXTURE, TEXTURE
                     ]))
     return cubes
+
+def get_room(map: Map, pos: Point):
+    return map.map[max(floor(pos.z/L), 0)][max(floor(pos.x/L), 0)]
+
+def cross_walls(map: Map, start: Point, end: Point) -> bool:
+    if not(0 < start.x < len(map.map[0])):
+        return False
+    
+    dx = end.x - start.x
+    dz = end.z - start.z
+    
+    start_room = get_room(map, start)
+    
+    # Trouver les murs les plus éloignés sur les 4 directions
+    # Vérifier que les coordonnées sont dans cet intervalle
+    return False 
+            
 
 c1 = Cube(5, Point(0, 0, 6))
 c2 = Cube(10, Point(0, 0, 11), texture=[None, None, TEXTURE, TEXTURE, TEXTURE, TEXTURE])
@@ -491,7 +509,7 @@ f = 0
 while not done:
     f += 1
     fps = clock.get_fps()
-    pygame.draw.rect(window, (0, 100, 255), (0, 0, window.get_width(), window.get_height()))
+    pygame.draw.rect(window, (0, 0, 0), (0, 0, window.get_width(), window.get_height()))
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             done = True
@@ -559,7 +577,11 @@ while not done:
     if f % 2 == 0:
         pygame.mouse.set_pos((window.get_width() / 2, window.get_height() / 2))
     pygame.display.update()
-
-    camera.origine = move * dt * speed_move * Vector(1, 1, 1) + camera.origine
+    
+    start = camera.origine
+    end = move * dt * speed_move * Vector(1, 1, 1) + camera.origine
+    
+    if not(cross_walls(map, start, end)):
+        camera.origine = end
 
 exit()
