@@ -246,7 +246,7 @@ class Camera:
 
         self.size = size
         self.d = 1
-        self.N = 6
+        self.N = 5
         
         self.textures = {}
 
@@ -282,7 +282,7 @@ class Camera:
     def draw(self, surface: pygame.Surface, object:Object):
         NEAR = 0.5
         
-        self.draw_edges(surface, object, NEAR)
+        #self.draw_edges(surface, object, NEAR)
         self.draw_faces(surface, object, NEAR)
 
     def draw_edges(self, surface: pygame.Surface, object: Object, near:float):
@@ -460,7 +460,9 @@ camera = Camera(Point(1,1,1), (window.get_width(), window.get_height()))
 
 clock = pygame.time.Clock()
 font = pygame.font.Font(None, 24)
-TEXTURE = pygame.image.load("assets/texture_test.jpg")
+WALL_TEXTURE = pygame.image.load("assets/mur_texture.jpg")
+FLOOR_TEXTURE = pygame.image.load("assets/sol_texture.png")
+CEILING_TEXTURE = pygame.image.load("assets/plafond_texture.jpg")
 L = 5
 
 def get_cubes(map: Map) -> list:
@@ -469,9 +471,9 @@ def get_cubes(map: Map) -> list:
         for x, room in enumerate(row):
             cubes.append(
                 Cube(L, Point(x*L, 0, y*L), texture=[
-                        TEXTURE if room.walls["top"] else None, TEXTURE if room.walls["bottom"] else None,
-                        TEXTURE if room.walls["left"] else None, TEXTURE if room.walls["right"] else None,
-                        TEXTURE, TEXTURE
+                        WALL_TEXTURE if room.walls["top"] else None, WALL_TEXTURE if room.walls["bottom"] else None,
+                        WALL_TEXTURE if room.walls["left"] else None, WALL_TEXTURE if room.walls["right"] else None,
+                        CEILING_TEXTURE, FLOOR_TEXTURE
                     ]))
     return cubes
 
@@ -513,10 +515,10 @@ def cross_walls(map: Map, start: Point, end: Point) -> bool:
             
 
 c1 = Cube(5, Point(0, 0, 6))
-c2 = Cube(10, Point(0, 0, 11), texture=[None, None, TEXTURE, TEXTURE, TEXTURE, TEXTURE])
-s1 = Square(10, Point(-5, 0, 15), texture=TEXTURE, rotation_y=radians(90))
-s2 = Square(10, Point(-5.0001, 0.0001, 15.001), texture=TEXTURE)
-s3 = Square(10, Point(5, 0, 15), texture=TEXTURE, rotation_y=radians(90))
+c2 = Cube(10, Point(0, 0, 11), texture=[None, None, WALL_TEXTURE, WALL_TEXTURE, WALL_TEXTURE, WALL_TEXTURE])
+s1 = Square(10, Point(-5, 0, 15), texture=WALL_TEXTURE, rotation_y=radians(90))
+s2 = Square(10, Point(-5.0001, 0.0001, 15.001), texture=WALL_TEXTURE)
+s3 = Square(10, Point(5, 0, 15), texture=WALL_TEXTURE, rotation_y=radians(90))
 
 world = get_cubes(map)
 
