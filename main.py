@@ -2,7 +2,7 @@ import pygame
 import pygame.gfxdraw
 
 from math import atan, cos, sin, radians
-from math import ceil, floor
+from math import inf, floor
 from typing import NamedTuple
 
 from map import Map
@@ -479,17 +479,37 @@ def get_room(map: Map, pos: Point):
     return map.map[max(floor(pos.z/L), 0)][max(floor(pos.x/L), 0)]
 
 def cross_walls(map: Map, start: Point, end: Point) -> bool:
-    if not(0 < start.x < len(map.map[0])):
+    start_x = int(floor(start.x / L))
+    start_z = int(floor(start.z / L))
+
+    end_x = int(floor(end.x / L))
+    end_z = int(floor(end.z / L))
+
+    if start_x == end_x and start_z == end_z:
         return False
-    
-    dx = end.x - start.x
-    dz = end.z - start.z
-    
-    start_room = get_room(map, start)
-    
-    # Trouver les murs les plus éloignés sur les 4 directions
-    # Vérifier que les coordonnées sont dans cet intervalle
-    return False 
+
+    cell = map.map[start_z][start_x]
+
+    dx = end_x - start_x
+    dz = end_z - start_z
+
+    if dx == 1:
+        return cell.walls["right"]
+    if dx == -1:
+        return cell.walls["left"]
+
+    if dz == 1:
+        return cell.walls["bottom"]
+    if dz == -1:
+        return cell.walls["top"]
+
+    if dx != 0 and dz != 0:
+        return (
+            cross_walls(map, start, Point(end.x, start.y, start.z)) or
+            cross_walls(map, Point(start.x, start.y, end.z), end)
+        )
+
+    return False
             
 
 c1 = Cube(5, Point(0, 0, 6))
