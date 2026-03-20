@@ -523,6 +523,7 @@ world = get_cubes(map)
 speed_move = 3
 done = False
 debug = True
+collision = True
 
 f = 0
 
@@ -538,6 +539,8 @@ while not done:
                 debug = not debug
             if event.key == pygame.K_ESCAPE:
                 done = True
+            if event.key == pygame.K_c:
+                collision = not collision
 
     keys = pygame.key.get_pressed()
     
@@ -601,7 +604,9 @@ while not done:
     start = camera.origine
     end = move * dt * speed_move * Vector(1, 1, 1) + camera.origine
     
-    if not(cross_walls(map, start, end)):
-        camera.origine = end
+    if collision:
+        if cross_walls(map, start, end):
+            continue
+    camera.origine = end
 
 exit()
