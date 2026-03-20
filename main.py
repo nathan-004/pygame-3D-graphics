@@ -246,7 +246,9 @@ class Camera:
 
         self.size = size
         self.d = 1
-        self.N = 5
+        self.N_MIN = 1
+        self.N_MAX = 8
+        self.target_pixel = 1500
         
         self.textures = {}
 
@@ -350,12 +352,17 @@ class Camera:
                 del self.textures[key]
 
     def draw_triangle(self, pixels: pygame.surfarray.pixels3d, tex_pixels: pygame.surfarray.pixels3d, surface_size: tuple, v1: Point, v2: Point, v3: Point):
-        N = self.N
-
         width, height = surface_size
         x1, y1, z1, u1, v1t = v1
         x2, y2, z2, u2, v2t = v2
         x3, y3, z3, u3, v3t = v3
+
+        area = abs(
+            x1*(y2 - y3) +
+            x2*(y3 - y1) +
+            x3*(y1 - y2)
+        ) / 2
+        N = min(max(int((area / self.target_pixel)**0.5), self.N_MIN), self.N_MAX)
 
         xmin = max(0, int(min(x1, x2, x3)))
         xmax = min(width - 1, int(max(x1, x2, x3)))
