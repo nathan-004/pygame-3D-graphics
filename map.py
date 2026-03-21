@@ -97,7 +97,7 @@ class Map:
         return random.choice(valid_cells) if valid_cells else (0, 0)
     
 
-    def draw(self, surface:pygame.Surface):
+    def draw(self, surface:pygame.Surface, pos:tuple = None, direction:tuple = None):
         """
         Affichage de la map pour le débogage sur la Surface donnée
         """
@@ -108,6 +108,13 @@ class Map:
         for y in range(self.height):
             for x in range(self.width): 
                 self.draw_cell(x, y, (cell_size_x, cell_size_y), surface)
+                if (x, y) == pos:
+                    px = x * cell_size_x + cell_size_x // 2
+                    py = y * cell_size_y + cell_size_y // 2
+                    dir_x, dir_y = direction
+                    end_pos = (px + dir_x * cell_size_x // 3, py + dir_y * cell_size_y // 3)
+                    pygame.draw.circle(surface, (0, 0, 255), (px, py), cell_size_x // 4)
+                    pygame.draw.line(surface, (0, 0, 255), (px, py), end_pos, 2)
 
     def draw_cell(self, x, y, cell_size, surface):
         """Affiche la salle correspondante | Composant de `draw`"""

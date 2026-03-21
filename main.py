@@ -246,9 +246,9 @@ class Camera:
 
         self.size = size
         self.d = 1
-        self.N_MIN = 2
-        self.N_MAX = 6
-        self.target_pixel = 1500
+        self.N_MIN = 3
+        self.N_MAX = 7
+        self.target_pixel = 1250
         
         self.textures = {}
 
@@ -455,10 +455,10 @@ class Camera:
     def fov_y(self):
         return 2 * atan(self.size[1] / 2 / self.d)
 
-map = Map.random((2, 2))
+map = Map.random((10, 10))
 
 window = pygame.display.set_mode((1280, 780)) # (0, 0), pygame.FULLSCREEN
-map_surface = pygame.Surface((500, 150))
+map_surface = pygame.Surface((300, 300))
 pygame.display.set_caption("3d Graphics")
 pygame.mouse.set_visible(False)
 pygame.font.init()
@@ -667,7 +667,7 @@ while not done:
         window.blit(origine_surface, (10, 35))
         window.blit(direction_surface, (10, 60))
     
-        map.draw(map_surface)
+        map.draw(map_surface, (floor(camera.origine.x / L), floor(camera.origine.z / L)), (camera.direction.x, camera.direction.z))
         window.blit(map_surface, (10, 80))
 
     mov = pygame.mouse.get_rel()
