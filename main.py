@@ -246,8 +246,8 @@ class Camera:
 
         self.size = size
         self.d = 1
-        self.N_MIN = 1
-        self.N_MAX = 8
+        self.N_MIN = 2
+        self.N_MAX = 6
         self.target_pixel = 1500
         
         self.textures = {}
@@ -484,9 +484,6 @@ def get_cubes(map: Map) -> list:
                     ]))
     return cubes
 
-def get_room(map: Map, pos: Point):
-    return map.map[max(floor(pos.z/L), 0)][max(floor(pos.x/L), 0)]
-
 def cross_walls(map: Map, start: Point, end: Point) -> bool:
     start_x = int(floor(start.x / L))
     start_z = int(floor(start.z / L))
@@ -519,7 +516,83 @@ def cross_walls(map: Map, start: Point, end: Point) -> bool:
         )
 
     return False
+
+def is_blocked(map, x0, z0, x1, z1):
+    dx = x1 - x0
+    dz = z1 - z0
+
+    steps = max(abs(dx), abs(dz))
+    if steps == 0:
+        return False
+
+    prev_x, prev_z = x0, z0
+
+    for i in range(1, steps + 1):
+        x = x0 + dx * i // steps
+        z = z0 + dz * i // steps
+
+        if (x, z) != (prev_x, prev_z):
+            dx_step = x - prev_x
+            dz_step = z - prev_z
+
+            cell = map.map[prev_z][prev_x]
+
+            blocked_x = (
+                (dx_step > 0 and cell.walls["right"]) or
+                (dx_step < 0 and cell.walls["left"])
+            )
+
+            blocked_z = (
+                (dz_step > 0 and cell.walls["bottom"]) or
+                (dz_step < 0 and cell.walls["top"])
+            )
+
+            if dx_step != 0 and dz_step != 0:
+                blocked = blocked_x and blocked_z
+            else:
+                blocked = blocked_x or blocked_z
             
+            if blocked:
+                return True
+
+        prev_x, prev_z = x, z
+
+    return False
+
+def filter_cubes(camera: Camera, map: Map, objects: list[Object]) -> list:
+    new_objects = []
+    blocked = {}
+
+    cur_x = floor(camera.origine.x / L)
+    cur_z = floor(camera.origine.z / L)
+
+    for obj in objects:
+        map_x = floor(obj.pos.x / L)
+        map_z = floor(obj.pos.z / L)
+
+        dx = map_x - cur_x
+        dz = map_z - cur_z
+
+        dist = (dx*dx + dz*dz)**0.5
+        if dist == 0:
+            new_objects.append(obj)
+            continue
+
+        dir_x = round(dx / dist, 2)
+        dir_z = round(dz / dist, 2)
+        direction = (dir_x, dir_z)
+
+        if direction in blocked:
+            if dist > blocked[direction]:
+                continue
+
+        if is_blocked(map, cur_x, cur_z, map_x, map_z):
+            blocked[direction] = dist
+            continue
+
+        new_objects.append(obj)
+
+    return new_objects
 
 c1 = Cube(5, Point(0, 0, 6))
 c2 = Cube(10, Point(0, 0, 11), texture=[None, None, WALL_TEXTURE, WALL_TEXTURE, WALL_TEXTURE, WALL_TEXTURE])
@@ -580,7 +653,7 @@ while not done:
     if dot(move, move) != 0:
         move = normalize(move)
  
-    camera.draw_world(window, world)
+    camera.draw_world(window, filter_cubes(camera, map, world))
 
     if debug:
         origine_text = f"Origine: ({camera.origine.x:.2f}, {camera.origine.y:.2f}, {camera.origine.z:.2f})"
