@@ -1,8 +1,9 @@
 import pygame
 import pygame.gfxdraw
+import numpy as np
 
 from math import atan, cos, sin, radians
-from math import inf, floor
+from math import floor
 from typing import NamedTuple
 
 from map import Map
@@ -252,6 +253,8 @@ class Camera:
         
         self.textures = {}
 
+        self.zbuffer = None
+
     @property
     def direction(self):
         return normalize(Vector(
@@ -275,6 +278,8 @@ class Camera:
         ]
 
     def draw_world(self, surface:pygame.Surface, objects: list[Object]):
+        self.zbuffer = np.full((surface.get_height(), surface.get_width()), np.inf, dtype=np.float32)
+
         camera_plane = Plan.plane_from_point(self.direction, self.origine)
         objects = sorted(objects, key= lambda x: camera_plane.distance(x.pos), reverse=True)
 
@@ -400,16 +405,20 @@ class Camera:
                     uz = w1*(u1/z1) + w2*(u2 / z2) + w3*(u3 / z3)
                     vz = w1*(v1t/z1) + w2*(v2t/z2) + w3*(v3t/z3)
                     iz = w1*(1/z1) + w2*(1/z2) + w3*(1/z3)
+                    z = 1.0 / iz
 
-                    u = uz / iz
-                    v = vz / iz
+                    if z < self.zbuffer[y, x]:
+                        u = uz / iz
+                        v = vz / iz
 
-                    tx = int(u * (tex_w-1))
-                    ty = int((1.0 - v) * (tex_h-1))
+                        tx = int(u * (tex_w-1))
+                        ty = int((1.0 - v) * (tex_h-1))
 
-                    color = tex_pixels[tx, ty]
+                        color = tex_pixels[tx, ty]
 
-                    pixels[x:x+N, y:y+N] = color
+                        if z < self.zbuffer[y, x]:
+                            self.zbuffer[y:y+N, x:x+N] = z
+                            pixels[x:x+N, y:y+N] = color
 
                 # incrément horizontal
                 w1 += dw1_dx * N
