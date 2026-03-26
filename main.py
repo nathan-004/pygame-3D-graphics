@@ -586,6 +586,9 @@ def filter_cubes(camera: Camera, map: Map, objects: list[Object]) -> list:
         if dist == 0:
             new_objects.append(obj)
             continue
+        
+        if dist >= L * 5:
+            continue
 
         dir_x = round(dx / dist, 2)
         dir_z = round(dz / dist, 2)
