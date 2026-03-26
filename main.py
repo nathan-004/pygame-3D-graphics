@@ -278,10 +278,10 @@ class Camera:
         ]
 
     def draw_world(self, surface:pygame.Surface, objects: list[Object]):
-        self.zbuffer = np.full((surface.get_height(), surface.get_width()), np.inf, dtype=np.float32)
+        self.zbuffer = np.full((surface.get_height(), surface.get_width()), 2 * L, dtype=np.float32)
 
         camera_plane = Plan.plane_from_point(self.direction, self.origine)
-        objects = sorted(objects, key= lambda x: camera_plane.distance(x.pos), reverse=True)
+        objects = sorted(objects, key= lambda x: camera_plane.distance(x.pos), reverse=False)
 
         for obj in objects:
             self.draw(surface, obj)
@@ -530,7 +530,7 @@ def is_blocked(map, x0, z0, x1, z1):
     dx = x1 - x0
     dz = z1 - z0
 
-    steps = max(abs(dx), abs(dz))
+    steps = floor(max(abs(dx), abs(dz)))
     if steps == 0:
         return False
 
@@ -544,7 +544,7 @@ def is_blocked(map, x0, z0, x1, z1):
             dx_step = x - prev_x
             dz_step = z - prev_z
 
-            cell = map.map[prev_z][prev_x]
+            cell = map.map[floor(prev_z)][floor(prev_x)]
 
             blocked_x = (
                 (dx_step > 0 and cell.walls["right"]) or
@@ -602,12 +602,6 @@ def filter_cubes(camera: Camera, map: Map, objects: list[Object]) -> list:
         new_objects.append(obj)
 
     return new_objects
-
-c1 = Cube(5, Point(0, 0, 6))
-c2 = Cube(10, Point(0, 0, 11), texture=[None, None, WALL_TEXTURE, WALL_TEXTURE, WALL_TEXTURE, WALL_TEXTURE])
-s1 = Square(10, Point(-5, 0, 15), texture=WALL_TEXTURE, rotation_y=radians(90))
-s2 = Square(10, Point(-5.0001, 0.0001, 15.001), texture=WALL_TEXTURE)
-s3 = Square(10, Point(5, 0, 15), texture=WALL_TEXTURE, rotation_y=radians(90))
 
 world = get_cubes(map)
 
