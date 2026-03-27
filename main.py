@@ -1,6 +1,7 @@
 import pygame
 import pygame.gfxdraw
 import numpy as np
+from numba import njit
 
 from math import atan, cos, sin, radians
 from math import floor
@@ -247,9 +248,9 @@ class Camera:
 
         self.size = size
         self.d = 1
-        self.N_MIN = 3
-        self.N_MAX = 7
-        self.target_pixel = 1250
+        self.N_MIN = 1
+        self.N_MAX = 5
+        self.target_pixel = 3000
         
         self.textures = {}
 
@@ -278,7 +279,7 @@ class Camera:
         ]
 
     def draw_world(self, surface:pygame.Surface, objects: list[Object]):
-        self.zbuffer = np.full((surface.get_height(), surface.get_width()), 2 * L, dtype=np.float32)
+        self.zbuffer = np.full((surface.get_height(), surface.get_width()), L * 3, dtype=np.float32)
 
         camera_plane = Plan.plane_from_point(self.direction, self.origine)
         objects = sorted(objects, key= lambda x: camera_plane.distance(x.pos), reverse=False)
@@ -358,6 +359,7 @@ class Camera:
 
     def draw_triangle(self, pixels: pygame.surfarray.pixels3d, tex_pixels: pygame.surfarray.pixels3d, surface_size: tuple, v1: Point, v2: Point, v3: Point):
         width, height = surface_size
+
         x1, y1, z1, u1, v1t = v1
         x2, y2, z2, u2, v2t = v2
         x3, y3, z3, u3, v3t = v3
@@ -367,67 +369,20 @@ class Camera:
             x2*(y3 - y1) +
             x3*(y1 - y2)
         ) / 2
+
         N = min(max(int((area / self.target_pixel)**0.5), self.N_MIN), self.N_MAX)
 
-        xmin = max(0, int(min(x1, x2, x3)))
-        xmax = min(width - 1, int(max(x1, x2, x3)))
-
-        ymin = max(0, int(min(y1, y2, y3)))
-        ymax = min(height - 1, int(max(y1, y2, y3)))
-
-        denom = (y2 - y3)*(x1 - x3) + (x3 - x2)*(y1 - y3)
-        if denom == 0:
-            return
-
-        inv_denom = 1.0 / denom
-
-        tex_w = tex_pixels.shape[0]
-        tex_h = tex_pixels.shape[1]
-
-        # dérivées barycentriques
-        dw1_dx = (y2 - y3) * inv_denom
-        dw1_dy = (x3 - x2) * inv_denom
-
-        dw2_dx = (y3 - y1) * inv_denom
-        dw2_dy = (x1 - x3) * inv_denom
-
-        # point de départ
-        w1_row = ((y2 - y3)*(xmin - x3) + (x3 - x2)*(ymin - y3)) * inv_denom
-        w2_row = ((y3 - y1)*(xmin - x3) + (x1 - x3)*(ymin - y3)) * inv_denom
-
-        for y in range(ymin, ymax, N):
-            w1 = w1_row
-            w2 = w2_row
-            w3 = 1 - w1 - w2
-
-            for x in range(xmin, xmax, N):
-                if w1 >= 0 and w2 >= 0 and w3 >= 0:
-                    uz = w1*(u1/z1) + w2*(u2 / z2) + w3*(u3 / z3)
-                    vz = w1*(v1t/z1) + w2*(v2t/z2) + w3*(v3t/z3)
-                    iz = w1*(1/z1) + w2*(1/z2) + w3*(1/z3)
-                    z = 1.0 / iz
-
-                    if z < self.zbuffer[y, x]:
-                        u = uz / iz
-                        v = vz / iz
-
-                        tx = int(u * (tex_w-1))
-                        ty = int((1.0 - v) * (tex_h-1))
-
-                        color = tex_pixels[tx, ty]
-
-                        if z < self.zbuffer[y, x]:
-                            self.zbuffer[y:y+N, x:x+N] = z
-                            pixels[x:x+N, y:y+N] = color
-
-                # incrément horizontal
-                w1 += dw1_dx * N
-                w2 += dw2_dx * N
-                w3 = 1 - w1 - w2
-
-            # incrément vertical
-            w1_row += dw1_dy * N
-            w2_row += dw2_dy * N
+        draw_triangle_numba(
+            pixels,
+            tex_pixels,
+            self.zbuffer,
+            width,
+            height,
+            x1, y1, z1, u1, v1t,
+            x2, y2, z2, u2, v2t,
+            x3, y3, z3, u3, v3t,
+            N
+        )
     
     def screen(self, p: Point2D, surface: pygame.Surface) -> Point2D:
         w, h = surface.get_size()
@@ -606,6 +561,90 @@ def filter_cubes(camera: Camera, map: Map, objects: list[Object]) -> list:
 
     return new_objects
 
+@njit(fastmath = True)
+def draw_triangle_numba(
+    pixels,
+    tex_pixels,
+    zbuffer,
+    width,
+    height,
+    x1, y1, z1, u1, v1t,
+    x2, y2, z2, u2, v2t,
+    x3, y3, z3, u3, v3t,
+    N
+):
+    xmin = max(0, int(min(x1, x2, x3)))
+    xmax = min(width - 1, int(max(x1, x2, x3)))
+
+    ymin = max(0, int(min(y1, y2, y3)))
+    ymax = min(height - 1, int(max(y1, y2, y3)))
+
+    denom = (y2 - y3)*(x1 - x3) + (x3 - x2)*(y1 - y3)
+    if denom == 0:
+        return
+
+    inv_denom = 1.0 / denom
+
+    tex_w = tex_pixels.shape[0]
+    tex_h = tex_pixels.shape[1]
+
+    dw1_dx = (y2 - y3) * inv_denom
+    dw1_dy = (x3 - x2) * inv_denom
+
+    dw2_dx = (y3 - y1) * inv_denom
+    dw2_dy = (x1 - x3) * inv_denom
+
+    w1_row = ((y2 - y3)*(xmin - x3) + (x3 - x2)*(ymin - y3)) * inv_denom
+    w2_row = ((y3 - y1)*(xmin - x3) + (x1 - x3)*(ymin - y3)) * inv_denom
+
+    for y in range(ymin, ymax, N):
+
+        w1 = w1_row
+        w2 = w2_row
+        w3 = 1.0 - w1 - w2
+
+        for x in range(xmin, xmax, N):
+
+            if w1 >= 0 and w2 >= 0 and w3 >= 0:
+
+                uz = w1*(u1/z1) + w2*(u2/z2) + w3*(u3/z3)
+                vz = w1*(v1t/z1) + w2*(v2t/z2) + w3*(v3t/z3)
+                iz = w1*(1.0/z1) + w2*(1.0/z2) + w3*(1.0/z3)
+
+                z = 1.0 / iz
+
+                if z < zbuffer[y, x]:
+
+                    u = uz / iz
+                    v = vz / iz
+
+                    tx = int(u * (tex_w - 1))
+                    ty = int((1.0 - v) * (tex_h - 1))
+
+                    if tx < 0:
+                        tx = 0
+                    elif tx >= tex_w:
+                        tx = tex_w - 1
+
+                    if ty < 0:
+                        ty = 0
+                    elif ty >= tex_h:
+                        ty = tex_h - 1
+
+                    color = tex_pixels[tx, ty]
+
+                    for yy in range(y, min(y+N, height)):
+                        for xx in range(x, min(x+N, width)):
+                            zbuffer[yy, xx] = z
+                            pixels[xx, yy] = color
+
+            w1 += dw1_dx * N
+            w2 += dw2_dx * N
+            w3 = 1.0 - w1 - w2
+
+        w1_row += dw1_dy * N
+        w2_row += dw2_dy * N
+
 world = get_cubes(map)
 
 speed_move = 3
@@ -677,7 +716,7 @@ while not done:
         window.blit(map_surface, (10, 80))
 
     mov = pygame.mouse.get_rel()
-    sens = 0.03
+    sens = 0.05
     dt = clock.tick(60) / 1000
 
     camera.yaw   += mov[0] * sens * dt
