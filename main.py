@@ -419,6 +419,7 @@ class Camera:
     def fov_y(self):
         return 2 * atan(self.size[1] / 2 / self.d)
 
+L = 5
 map = Map.random((10, 10))
 
 window = pygame.display.set_mode((1280, 780)) # (0, 0), pygame.FULLSCREEN
@@ -427,14 +428,13 @@ pygame.display.set_caption("3d Graphics")
 pygame.mouse.set_visible(False)
 pygame.font.init()
 
-camera = Camera(Point(1,1,1), (window.get_width(), window.get_height()))
+camera = Camera(Point(1,L * 0.5,1), (window.get_width(), window.get_height()))
 
 clock = pygame.time.Clock()
 font = pygame.font.Font(None, 24)
 WALL_TEXTURE = pygame.image.load("assets/mur_texture.jpg")
 FLOOR_TEXTURE = pygame.image.load("assets/sol_texture.png")
 CEILING_TEXTURE = pygame.image.load("assets/plafond_texture.jpg")
-L = 5
 
 def get_cubes(map: Map) -> list:
     cubes = []
@@ -673,9 +673,10 @@ while not done:
     
     forward = normalize(camera.direction)
     right = normalize(cross(forward, Vector(0,1,0)))
-    top = Vector(0, 1, 0)
 
     move = Vector(0,0,0)
+
+    cur_speed_move = speed_move
 
     if keys[pygame.K_UP] or keys[pygame.K_z]:
         move = move + forward
@@ -690,10 +691,7 @@ while not done:
         move = move + right
 
     if keys[pygame.K_LSHIFT]:
-        move = move + top
-
-    if keys[pygame.K_LCTRL]:
-        move = move - top
+        cur_speed_move += 2
 
     if dot(move, move) != 0:
         move = normalize(move)
@@ -716,7 +714,7 @@ while not done:
         window.blit(map_surface, (10, 80))
 
     mov = pygame.mouse.get_rel()
-    sens = 0.05
+    sens = 0.1
     dt = clock.tick(60) / 1000
 
     camera.yaw   += mov[0] * sens * dt
@@ -729,7 +727,7 @@ while not done:
     pygame.display.update()
     
     start = camera.origine
-    end = move * dt * speed_move * Vector(1, 1, 1) + camera.origine
+    end = move * dt * cur_speed_move * Vector(1, 0, 1) + camera.origine
     
     if collision:
         if cross_walls(map, start, end):
