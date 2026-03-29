@@ -32,7 +32,7 @@ world = get_cubes(map)
 
 @main_3D(window, camera, map)
 def main():
-    player_light = Light(camera.origine, 1, 7, (1,0.5,0.5))
+    player_light = Light(camera.origine, 1, 10, (1,0.5,0.5))
     camera.draw_world(window, filter_cubes(camera, map, world + [player_light]))
 
 if __name__ == "__main__":

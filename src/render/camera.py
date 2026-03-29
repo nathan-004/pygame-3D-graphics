@@ -3,7 +3,7 @@ from numba import njit
 import pygame
 from math import atan
 
-from src.constants import L
+from src.constants import L, K
 from src.render.utils import *
 
 @njit(fastmath = True)
@@ -105,7 +105,7 @@ def draw_triangle_numba(
 
                         dist2 = dx*dx + dy*dy + dz*dz
                         if dist2 < radius * radius:
-                            intensity = (1 / (1 + 0.5 * dist2)) * light[1]
+                            intensity = (1 / (1 + K * dist2)) * light[1]
                             
                             r += color[0] * intensity * light[2][0]
                             g += color[1] * intensity * light[2][1]
