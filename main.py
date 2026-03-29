@@ -29,11 +29,11 @@ def get_cubes(map: Map) -> list:
     return cubes
 
 world = get_cubes(map)
-world.append(Light(Point(1, L * 0.5, 1), 1, color = (1, 1, 1)))
 
 @main_3D(window, camera, map)
 def main():
-    camera.draw_world(window, filter_cubes(camera, map, world))
+    player_light = Light(camera.origine, 1, 7, (1,0.5,0.5))
+    camera.draw_world(window, filter_cubes(camera, map, world + [player_light]))
 
 if __name__ == "__main__":
     main()

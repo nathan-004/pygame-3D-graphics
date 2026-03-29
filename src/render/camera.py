@@ -17,7 +17,8 @@ def draw_triangle_numba(
     x2, y2, z2, u2, v2t,
     x3, y3, z3, u3, v3t,
     N, camera_position,
-    lights: list[tuple]
+    lights: list[tuple],
+    forward, right, up
 ):
     xmin = max(0, int(min(x1, x2, x3)))
     xmax = min(width - 1, int(max(x1, x2, x3)))
@@ -86,9 +87,13 @@ def draw_triangle_numba(
                     px = (x / width) * 2 - 1
                     py = 1 - (y / height) * 2
 
-                    xw = px * z + camera_position[0]
-                    yw = py * z + camera_position[1]
-                    zw = z + camera_position[2]
+                    dir_x = forward[0] + right[0]*px + up[0]*py
+                    dir_y = forward[1] + right[1]*px + up[1]*py
+                    dir_z = forward[2] + right[2]*px + up[2]*py
+
+                    xw = camera_position[0] + dir_x * z
+                    yw = camera_position[1] + dir_y * z
+                    zw = camera_position[2] + dir_z * z
 
                     for light in lights:
                         lx, ly, lz = light[0]
@@ -266,6 +271,11 @@ class Camera:
 
         N = min(max(int((area / self.target_pixel)**0.5), self.N_MIN), self.N_MAX)
 
+        m = self.view_matrix
+        forward = np.array(m[2], dtype=np.float64)
+        right = np.array(m[0], dtype=np.float64)
+        up = np.array(m[1], dtype=np.float64)
+
         draw_triangle_numba(
             pixels,
             tex_pixels,
@@ -276,7 +286,8 @@ class Camera:
             x2, y2, z2, u2, v2t,
             x3, y3, z3, u3, v3t,
             N, (self.origine.x, self.origine.y, self.origine.z),
-            lights
+            lights,
+            forward, right, up
         )
     
     def screen(self, p: Point2D, surface: pygame.Surface) -> Point2D:
