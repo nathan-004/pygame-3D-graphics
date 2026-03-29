@@ -16,7 +16,8 @@ def draw_triangle_numba(
     x1, y1, z1, u1, v1t,
     x2, y2, z2, u2, v2t,
     x3, y3, z3, u3, v3t,
-    N
+    N, camera_position,
+    lights: list[tuple]
 ):
     xmin = max(0, int(min(x1, x2, x3)))
     xmax = min(width - 1, int(max(x1, x2, x3)))
@@ -78,6 +79,35 @@ def draw_triangle_numba(
 
                     color = tex_pixels[tx, ty]
 
+                    r = 0
+                    g = 0
+                    b = 0
+
+                    px = (x / width) * 2 - 1
+                    py = 1 - (y / height) * 2
+
+                    xw = px * z + camera_position[0]
+                    yw = py * z + camera_position[1]
+                    zw = z + camera_position[2]
+
+                    for light in lights:
+                        lx, ly, lz = light[0]
+                        dx = lx - xw
+                        dy = ly - yw
+                        dz = lz - zw
+
+                        radius = light[3]
+
+                        dist2 = dx*dx + dy*dy + dz*dz
+                        if dist2 < radius * radius:
+                            intensity = (1 / (1 + 0.5 * dist2)) * light[1]
+                            
+                            r += color[0] * intensity * light[2][0]
+                            g += color[1] * intensity * light[2][1]
+                            b += color[2] * intensity * light[2][2]
+
+                    color = (r, g, b)
+
                     for yy in range(y, min(y+N, height)):
                         for xx in range(x, min(x+N, width)):
                             zbuffer[yy, xx] = z
@@ -113,6 +143,8 @@ class Camera:
 
         self.zbuffer = None
 
+        self.lights = []
+
     @property
     def direction(self):
         return normalize(Vector(
@@ -137,6 +169,9 @@ class Camera:
 
     def draw_world(self, surface:pygame.Surface, objects: list[Object]):
         self.zbuffer = np.full((surface.get_height(), surface.get_width()), L * 3, dtype=np.float32)
+
+        self.lights = [obj for obj in objects if isinstance(obj, Light)]
+        objects = [obj for obj in objects if not isinstance(obj, Light)]
 
         camera_plane = Plan.plane_from_point(self.direction, self.origine)
         objects = sorted(objects, key= lambda x: camera_plane.distance(x.pos), reverse=False)
@@ -227,6 +262,8 @@ class Camera:
             x3*(y1 - y2)
         ) / 2
 
+        lights = [((light.pos.x, light.pos.y, light.pos.z), light.intensity, light.color, light.radius) for light in self.lights]
+
         N = min(max(int((area / self.target_pixel)**0.5), self.N_MIN), self.N_MAX)
 
         draw_triangle_numba(
@@ -238,7 +275,8 @@ class Camera:
             x1, y1, z1, u1, v1t,
             x2, y2, z2, u2, v2t,
             x3, y3, z3, u3, v3t,
-            N
+            N, (self.origine.x, self.origine.y, self.origine.z),
+            lights
         )
     
     def screen(self, p: Point2D, surface: pygame.Surface) -> Point2D:

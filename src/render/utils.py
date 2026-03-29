@@ -131,6 +131,13 @@ class Object:
     def points(self):
         return [Point(point.x + self.pos.x, point.y + self.pos.y, point.z + self.pos.z, point.u, point.v) for point in self._vertices]
     
+class Light:
+    def __init__(self, pos:Point, intensity:float = 0.5, radius:float = 5, color:tuple = (1,1,1)):
+        self.pos = pos
+        self.intensity = intensity
+        self.color = color
+        self.radius = radius
+    
 class Cube(Object):
     def __init__(self, l, pos, color:pygame.Color = None, texture: pygame.Surface = None):
         vertices = [

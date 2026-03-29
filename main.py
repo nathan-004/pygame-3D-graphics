@@ -29,6 +29,7 @@ def get_cubes(map: Map) -> list:
     return cubes
 
 world = get_cubes(map)
+world.append(Light(Point(1, L * 0.5, 1), 1, color = (1, 1, 1)))
 
 @main_3D(window, camera, map)
 def main():
