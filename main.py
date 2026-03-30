@@ -29,11 +29,19 @@ def get_cubes(map: Map) -> list:
     return cubes
 
 world = get_cubes(map)
+f = 5
+var = 1
 
 @main_3D(window, camera, map)
 def main():
-    player_light = Light(camera.origine, 1, 10, (1,0.5,0.5))
+    global f
+    global var
+    N = 50
+    if f >= N or f <= 0:
+        var *= -1
+    player_light = Light(camera.origine, 1, 10, (f / N,f / N, f / N))
     camera.draw_world(window, filter_cubes(camera, map, world + [player_light]))
+    f += var
 
 if __name__ == "__main__":
     main()
