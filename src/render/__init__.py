@@ -196,8 +196,10 @@ def main_3D(window: pygame.Surface, camera: Camera, map: Map):
                     window.blit(fps_surface, (10, 10))
                     window.blit(origine_surface, (10, 35))
                     window.blit(direction_surface, (10, 60))
-                
-                    map.draw(map_surface, (floor(camera.origine.x / L), floor(camera.origine.z / L)), (camera.direction.x, camera.direction.z))
+                    
+                    highlited = [(floor(obj.pos.x / L), floor(obj.pos.z / L)) for obj in camera.latest_draw]
+                    
+                    map.draw(map_surface, (floor(camera.origine.x / L), floor(camera.origine.z / L)), (camera.direction.x, camera.direction.z), highlited = highlited)
                     window.blit(map_surface, (10, 80))
 
                 mov = pygame.mouse.get_rel()

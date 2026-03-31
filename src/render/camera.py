@@ -105,7 +105,7 @@ def draw_triangle_numba(
 
                         dist2 = dx*dx + dy*dy + dz*dz
                         if dist2 < radius * radius:
-                            intensity = (1 / (1 + K * dist2)) * light[1]
+                            intensity = min(1, (1 / (1 + K * dist2)) * light[1])
                             
                             r += color[0] * intensity * light[2][0]
                             g += color[1] * intensity * light[2][1]
@@ -149,6 +149,7 @@ class Camera:
         self.zbuffer = None
 
         self.lights = []
+        self.latest_draw = []
 
     @property
     def direction(self):
@@ -173,6 +174,7 @@ class Camera:
         ]
 
     def draw_world(self, surface:pygame.Surface, objects: list[Object]):
+        self.latest_draw = objects
         self.zbuffer = np.full((surface.get_height(), surface.get_width()), L * 3, dtype=np.float32)
 
         self.lights = [obj for obj in objects if isinstance(obj, Light)]

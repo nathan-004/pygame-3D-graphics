@@ -97,17 +97,23 @@ class Map:
         return random.choice(valid_cells) if valid_cells else (0, 0)
     
 
-    def draw(self, surface:pygame.Surface, pos:tuple = None, direction:tuple = None):
+    def draw(self, surface:pygame.Surface, pos:tuple = None, direction:tuple = None, highlited:list = None):
         """
         Affichage de la map pour le débogage sur la Surface donnée
         """
+        if highlited is None:
+            highlited = []
+        
         w, h = surface.get_size()
         cell_size_x, cell_size_y = w // self.width, h // self.height
         surface.fill((0,0,0))
 
         for y in range(self.height):
-            for x in range(self.width): 
-                self.draw_cell(x, y, (cell_size_x, cell_size_y), surface)
+            for x in range(self.width):
+                if (x, y) in highlited:
+                    self.draw_cell(x, y, (cell_size_x, cell_size_y), surface, custom_color = (0, 255, 255))
+                else:
+                    self.draw_cell(x, y, (cell_size_x, cell_size_y), surface)
                 if (x, y) == pos:
                     px = x * cell_size_x + cell_size_x // 2
                     py = y * cell_size_y + cell_size_y // 2
@@ -116,14 +122,17 @@ class Map:
                     pygame.draw.circle(surface, (0, 0, 255), (px, py), cell_size_x // 4)
                     pygame.draw.line(surface, (0, 0, 255), (px, py), end_pos, 2)
 
-    def draw_cell(self, x, y, cell_size, surface):
+    def draw_cell(self, x, y, cell_size, surface, custom_color = None ):
         """Affiche la salle correspondante | Composant de `draw`"""
         if type(cell_size) is int:
             cell_size_x, cell_size_y = cell_size, cell_size
         else:
             cell_size_x, cell_size_y = cell_size
         room = self.map[y][x]
-        color = (0, 0, 0)
+        if custom_color:
+            color = custom_color
+        else:
+            color = (0, 0, 0)
 
         px = x * cell_size_x
         py = y * cell_size_y
