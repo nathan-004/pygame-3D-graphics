@@ -166,10 +166,10 @@ def main_3D(window: pygame.Surface, camera: Camera, map: Map):
                 cur_speed_move = speed_move
 
                 if keys[pygame.K_UP] or keys[pygame.K_z]:
-                    move = move + forward
+                    move = move - forward
 
                 if keys[pygame.K_DOWN] or keys[pygame.K_s]:
-                    move = move - forward
+                    move = move + forward
 
                 if keys[pygame.K_RIGHT] or keys[pygame.K_d]:
                     move = move - right
