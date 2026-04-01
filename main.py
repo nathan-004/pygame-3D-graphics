@@ -13,8 +13,8 @@ window = pygame.display.set_mode((1280, 780)) # (0, 0), pygame.FULLSCREEN
 camera = Camera(Point(1,L * 0.5,1), (window.get_width(), window.get_height()))
 
 WALL_TEXTURE = pygame.image.load("assets/mur_texture.jpg")
-FLOOR_TEXTURE = pygame.image.load("assets/sol_texture.png")
-CEILING_TEXTURE = pygame.image.load("assets/plafond_texture.jpg")
+FLOOR_TEXTURE = pygame.image.load("assets/a-brown1.png")
+CEILING_TEXTURE = pygame.image.load("assets/slime1.jpg")
 
 def get_cubes(map: Map) -> list:
     cubes = []
