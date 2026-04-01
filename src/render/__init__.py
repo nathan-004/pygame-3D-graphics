@@ -158,8 +158,8 @@ def main_3D(window: pygame.Surface, camera: Camera, map: Map):
 
                 keys = pygame.key.get_pressed()
                 
-                forward = normalize(camera.direction)
-                right = normalize(cross(forward, Vector(0,1,0)))
+                right = cross(camera.direction,Vector(0,1,0))
+                forward = normalize(cross(right, Vector(1,1,0)))
 
                 move = Vector(0,0,0)
 
