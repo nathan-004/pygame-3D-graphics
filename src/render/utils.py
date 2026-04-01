@@ -57,6 +57,14 @@ class Point(NamedTuple):
         else:
             raise NotImplementedError(f"{type(other)} cannot be additioned with Point")
         
+    def __add__(self, other):
+        if isinstance(other, Vector) or isinstance(other, Point):
+            return Point(self.x + other.x, self.y + other.y, self.z + other.z, self.u, self.v)
+        elif isinstance(other, float) or isinstance(other, int):
+            return Point(self.x + other, self.y + other, self.z + other, self.u, self.v)
+        else:
+            raise NotImplementedError(f"{type(other)} cannot be additioned with Point")
+        
     def __mul__(self, other):
         if isinstance(other, Vector) or isinstance(other, Point):
             if isinstance(other, Point):
@@ -139,7 +147,59 @@ class Light:
         self.intensity = intensity
         self.color = color
         self.radius = radius
-    
+
+class Cuboid(Object):
+    def __init__(self, l, L, h, pos, color:pygame.Color = None, texture: pygame.Surface = None):
+        vertices = [
+            # Front
+            Point(0, 0, 0, 0, 0),
+            Point(0, h, 0, 0, 1),
+            Point(L, h, 0, 1, 1),
+            Point(L, 0, 0, 1, 0),
+
+            # Back
+            Point(0, 0, l, 0, 0),
+            Point(0, h, l, 0, 1),
+            Point(L, h, l, 1, 1),
+            Point(L, 0, l, 1, 0),
+
+            # Left
+            Point(0, h, l, 1, 1),
+            Point(0, 0, l, 1, 0),
+
+            # Right
+            Point(L, 0, 0, 0, 0),
+            Point(L, h, 0, 0, 1),
+
+            # Top
+            Point(0, h, 0, 0, 0),
+            Point(L, h, 0, 1, 0),
+
+            # Bottom
+            Point(0, 0, l, 0, 1),
+            Point(L, 0, l, 1, 1),
+        ]
+
+
+        edges = [
+            (0,1),(1,2),(2,3),(3,0),
+            (4,5),(5,6),(6,7),(7,4),
+            (0,4),(1,5),(2,6),(3,7)
+        ]
+        
+        faces = [
+            (0, 1, 2, 3), # Front
+            (4, 5, 6, 7), # Back
+            
+            (0, 1, 8, 9), # Left
+            (11, 10, 7, 6), # Right
+            
+            (12, 5, 6, 13), # Top
+            (0, 14, 15, 3)
+        ]
+
+        super().__init__(vertices, edges, faces, pos, color, texture)
+
 class Cube(Object):
     def __init__(self, l, pos, color:pygame.Color = None, texture: pygame.Surface = None):
         vertices = [
@@ -248,6 +308,6 @@ class Torch(Element):
     """Objet torche contenant le support + lumière"""
 
     def __init__(self, position: Point):
-        self.support = Cube(1, position, texture=TORCH_TEXTURE)
-        self.light = Light(position, intensity=0.8)
+        self.support = Cuboid(0.5, 0.5, 2, position, texture=TORCH_TEXTURE)
+        self.light = Light(position + Point(0, 2, 0), intensity=0.5, color=(1, 0, 0))
         super().__init__([self.support, self.light])
