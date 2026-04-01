@@ -106,6 +106,11 @@ def filter_cubes(camera: Camera, map: Map, objects: list[Object]) -> list:
     for obj in objects:
         if isinstance(obj, Light):
             new_objects.append(obj)
+            continue
+        if isinstance(obj, Element):
+            new_objects.extend(filter_cubes(camera, map, obj.objects))
+            continue
+
         map_x = floor(obj.pos.x / L)
         map_z = floor(obj.pos.z / L)
 

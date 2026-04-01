@@ -179,7 +179,6 @@ class Camera:
 
         self.lights = [obj for obj in objects if isinstance(obj, Light)]
         objects = [obj for obj in objects if not isinstance(obj, Light)]
-
         camera_plane = Plan.plane_from_point(self.direction, self.origine)
         objects = sorted(objects, key= lambda x: camera_plane.distance(x.pos), reverse=False)
 
@@ -269,7 +268,16 @@ class Camera:
             x3*(y1 - y2)
         ) / 2
 
-        lights = [((light.pos.x, light.pos.y, light.pos.z), light.intensity, light.color, light.radius) for light in self.lights]
+
+        lights = [
+            (
+                (float(light.pos.x), float(light.pos.y), float(light.pos.z)),
+                float(light.intensity),
+                (float(light.color[0]), float(light.color[1]), float(light.color[2])),
+                float(light.radius)
+            )
+            for light in self.lights
+        ]
 
         N = min(max(int((area / self.target_pixel)**0.5), self.N_MIN), self.N_MAX)
 
@@ -287,7 +295,7 @@ class Camera:
             x1, y1, z1, u1, v1t,
             x2, y2, z2, u2, v2t,
             x3, y3, z3, u3, v3t,
-            N, (self.origine.x, self.origine.y, self.origine.z),
+            N, (float(self.origine.x), float(self.origine.y), float(self.origine.z)),
             lights,
             forward, right, up
         )

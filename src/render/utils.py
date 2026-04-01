@@ -3,6 +3,8 @@ import pygame
 
 from typing import NamedTuple
 
+from src.constants import L, TORCH_TEXTURE
+
 class Vector:
     def __init__(self, x:float, y:float, z:float):
         self.x, self.y, self.z = x, y, z
@@ -233,3 +235,19 @@ class Square(Object):
             rotated.append(Point(x_new, y, z, v.u, v.v))
         
         return rotated
+    
+class Element:
+    """Ensemble d'objets avec possibilité d'appeler une fonction à chaque frame"""
+    def __init__(self, objects: list):
+        self.objects = objects
+    
+    def tick(self):
+        pass
+
+class Torch(Element):
+    """Objet torche contenant le support + lumière"""
+
+    def __init__(self, position: Point):
+        self.support = Cube(1, position, texture=TORCH_TEXTURE)
+        self.light = Light(position, intensity=0.8)
+        super().__init__([self.support, self.light])
