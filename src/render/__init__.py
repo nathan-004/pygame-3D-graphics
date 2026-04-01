@@ -58,22 +58,36 @@ def is_blocked(map, x0, z0, x1, z1):
             dx_step = x - prev_x
             dz_step = z - prev_z
 
-            cell = map.map[floor(prev_z)][floor(prev_x)]
+            prev_cell = map.map[floor(prev_z)][floor(prev_x)]
+            curr_cell = map.map[floor(z)][floor(x)]
 
-            blocked_x = (
-                (dx_step > 0 and cell.walls["right"]) or
-                (dx_step < 0 and cell.walls["left"])
-            )
-
-            blocked_z = (
-                (dz_step > 0 and cell.walls["bottom"]) or
-                (dz_step < 0 and cell.walls["top"])
-            )
-
-            if dx_step != 0 and dz_step != 0:
-                blocked = blocked_x and blocked_z
-            else:
-                blocked = blocked_x or blocked_z
+            blocked = False
+            
+            if dx_step > 0 and dz_step > 0:  # bas-droit
+                route1_blocked = prev_cell.walls["right"] or curr_cell.walls["top"]
+                route2_blocked = prev_cell.walls["bottom"] or curr_cell.walls["left"]
+                blocked = route1_blocked and route2_blocked
+            elif dx_step > 0 and dz_step < 0:  # haut-droit
+                route1_blocked = prev_cell.walls["right"] or curr_cell.walls["bottom"]
+                route2_blocked = prev_cell.walls["top"] or curr_cell.walls["left"]
+                blocked = route1_blocked and route2_blocked
+            elif dx_step < 0 and dz_step > 0:  # bas-gauche
+                route1_blocked = prev_cell.walls["left"] or curr_cell.walls["top"]
+                route2_blocked = prev_cell.walls["bottom"] or curr_cell.walls["right"]
+                blocked = route1_blocked and route2_blocked
+            elif dx_step < 0 and dz_step < 0:  # haut-gauche
+                route1_blocked = prev_cell.walls["left"] or curr_cell.walls["bottom"]
+                route2_blocked = prev_cell.walls["top"] or curr_cell.walls["right"]
+                blocked = route1_blocked and route2_blocked
+        
+            elif dx_step > 0:  # droit
+                blocked = prev_cell.walls["right"] or curr_cell.walls["left"]
+            elif dx_step < 0:  # gauche
+                blocked = prev_cell.walls["left"] or curr_cell.walls["right"]
+            elif dz_step > 0:  # bas
+                blocked = prev_cell.walls["bottom"] or curr_cell.walls["top"]
+            elif dz_step < 0:  # haut
+                blocked = prev_cell.walls["top"] or curr_cell.walls["bottom"]
             
             if blocked:
                 return True
