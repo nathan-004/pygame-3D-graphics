@@ -26,7 +26,7 @@ def get_cubes(map: Map) -> list:
 
 world = get_cubes(map)
 
-torch = Torch(Point(1.0, 0, 1.0))
+torch = Torch(Point(1.0, 0, 3.0))
 
 f = 0
 @main_3D(window, camera, map)
@@ -36,7 +36,7 @@ def main():
     filtered_world = filter_cubes(camera, map, world + [player_light] + [torch])
     camera.draw_world(window, filtered_world)
     
-    if f % 10 == 0:
+    if f % 5 == 0:
         torch.tick()
 
     f += 1

@@ -2,9 +2,30 @@ from math import cos, sin, floor
 import random
 import pygame
 
-from typing import NamedTuple
+from typing import NamedTuple, Callable
 
 from src.constants import L, TORCH_TEXTURE
+
+def get_x_rotation_matrix(theta) -> list:
+    return [
+        [1, 0, 0],
+        [0, cos(theta), -sin(theta)],
+        [0, sin(theta), cos(theta)]
+    ]
+
+def get_y_rotation_matrix(theta) -> list:
+    return [
+        [cos(theta), 0, sin(theta)],
+        [0, 1, 0],
+        [-sin(theta), 0, cos(theta)]
+    ]
+
+def get_z_rotation_matrix(theta) -> list:
+    return [
+        [cos(theta), -sin(theta), 0],
+        [sin(theta), cos(theta), 0],
+        [0, 0, 1]
+    ]
 
 class Vector:
     def __init__(self, x:float, y:float, z:float):
@@ -124,6 +145,14 @@ def intersect_near(p1: Point, p2: Point, near:float):
 
     return Point(x, y, z, u, v)
 
+def rotate_point(p: Point, rotation_matrix: list) -> Point:
+    return Point(
+        p.x * rotation_matrix[0][0] + p.y * rotation_matrix[0][1] + p.z * rotation_matrix[0][2],
+        p.x * rotation_matrix[1][0] + p.y * rotation_matrix[1][1] + p.z * rotation_matrix[1][2],
+        p.x * rotation_matrix[2][0] + p.y * rotation_matrix[2][1] + p.z * rotation_matrix[2][2],
+        p.u, p.v
+    )
+
 class Object:
     def __init__(self, vertices:list, edges:list, faces:list, pos: Point, fill_color: pygame.Color = None, texture: pygame.Surface = None):
         if type(fill_color) is list:
@@ -142,6 +171,10 @@ class Object:
     def points(self):
         return [Point(point.x + self.pos.x, point.y + self.pos.y, point.z + self.pos.z, point.u, point.v) for point in self._vertices]
     
+    def transformation(self, f: Callable):
+        for idx, p in enumerate(self._vertices):
+            self._vertices[idx] = f(p)
+
 class Light:
     def __init__(self, pos:Point, intensity:float = 0.5, radius:float = 7, color:tuple = (1,1,1)):
         self.pos = pos
@@ -310,8 +343,8 @@ class Torch(Element):
 
     def __init__(self, position: Point, color:tuple = (1, 0, 0)):
         self.color = color
-        self.support = Cuboid(0.5, 0.5, 2, position, texture=TORCH_TEXTURE)
-        self.light = Light(position + Point(0, 2, 0), intensity=0.5, color=(1, 0, 0))
+        self.support = Cuboid(0.15, 0.15, 1, position + Point(0, 1, 0), texture=TORCH_TEXTURE)
+        self.light = Light(position + Point(0, 1, 0), intensity=0.5, color=(1, 0, 0))
         
         self.variation = 0
         self.max_variation, self.min_variation = 0.5, 0
@@ -326,3 +359,5 @@ class Torch(Element):
         positives = [random.random()*0.1] * int(abs(self.variation - self.max_variation)*10)
         self.variation += random.choice(negatives + positives)
         self.variation = min(self.max_variation, max(self.min_variation, self.variation))
+
+        self.support.transformation(lambda x : rotate_point(x, get_z_rotation_matrix(0.1)))
