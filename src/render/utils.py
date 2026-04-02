@@ -1,4 +1,5 @@
-from math import cos, sin
+from math import cos, sin, floor
+import random
 import pygame
 
 from typing import NamedTuple
@@ -307,7 +308,21 @@ class Element:
 class Torch(Element):
     """Objet torche contenant le support + lumière"""
 
-    def __init__(self, position: Point):
+    def __init__(self, position: Point, color:tuple = (1, 0, 0)):
+        self.color = color
         self.support = Cuboid(0.5, 0.5, 2, position, texture=TORCH_TEXTURE)
         self.light = Light(position + Point(0, 2, 0), intensity=0.5, color=(1, 0, 0))
+        
+        self.variation = 0
+        self.max_variation, self.min_variation = 0.5, 0
+        self.middle_variation = (self.max_variation + self.min_variation) / 2
+
         super().__init__([self.support, self.light])
+
+    def tick(self):
+        self.light.color = (self.color[0], self.color[1] + self.variation, self.color[2])
+        
+        negatives = [-random.random()*0.1] * int(abs(self.variation - self.min_variation)*10)
+        positives = [random.random()*0.1] * int(abs(self.variation - self.max_variation)*10)
+        self.variation += random.choice(negatives + positives)
+        self.variation = min(self.max_variation, max(self.min_variation, self.variation))
