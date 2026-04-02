@@ -7,6 +7,5 @@ K = 0.5 # Facteur diminution intensité lumière
 WALL_TEXTURE = pygame.image.load("assets/mur_texture.jpg")
 FLOOR_TEXTURE = pygame.image.load("assets/a-brown1.png")
 CEILING_TEXTURE = pygame.image.load("assets/slime1.jpg")
-TORCH_TEXTURE = [pygame.image.load("assets/torch.png")]*4 +
-                [pygame.image.load("assets/torch_top.png"),
+TORCH_TEXTURE = [pygame.image.load("assets/torch.png")]*4 +[pygame.image.load("assets/torch_top.png"),
               pygame.image.load("assets/torch_bottom.png")]
