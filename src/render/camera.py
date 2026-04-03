@@ -111,7 +111,7 @@ def draw_triangle_numba(
                             g += color[1] * intensity * light[2][1]
                             b += color[2] * intensity * light[2][2]
 
-                    color = (r, g, b)
+                    color = (min(r, 255), min(g, 255), min(b, 255))
 
                     for yy in range(y, min(y+N, height)):
                         for xx in range(x, min(x+N, width)):

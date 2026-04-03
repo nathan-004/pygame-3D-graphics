@@ -32,11 +32,11 @@ f = 0
 @main_3D(window, camera, map)
 def main():
     global f
-    player_light = Light(camera.origine, 1, 10, (1, 0.5, 0.5))
+    player_light = Light(camera.origine, 1, 10, (1, 0.5, 0))
     filtered_world = filter_cubes(camera, map, world + [player_light] + [torch])
     camera.draw_world(window, filtered_world)
     
-    if f % 5 == 0:
+    if f % 1 == 0:
         torch.tick()
 
     f += 1
