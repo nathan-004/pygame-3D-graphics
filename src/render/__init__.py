@@ -59,7 +59,11 @@ def is_blocked(map, x0, z0, x1, z1):
             dz_step = z - prev_z
 
             prev_cell = map.map[floor(prev_z)][floor(prev_x)]
-            curr_cell = map.map[floor(z)][floor(x)]
+            try:
+                curr_cell = map.map[floor(z)][floor(x)]
+            except Exception as e:
+                print(e)
+                return False
 
             blocked = False
             
@@ -104,9 +108,6 @@ def filter_cubes(camera: Camera, map: Map, objects: list[Object]) -> list:
     cur_z = floor(camera.origine.z / L)
 
     for obj in objects:
-        if isinstance(obj, Light):
-            new_objects.append(obj)
-            continue
         if isinstance(obj, Element):
             new_objects.extend(filter_cubes(camera, map, obj.objects))
             continue
@@ -122,7 +123,11 @@ def filter_cubes(camera: Camera, map: Map, objects: list[Object]) -> list:
             new_objects.append(obj)
             continue
         
-        if dist >= L * 5:
+        if dist >= 5:
+            continue
+
+        if isinstance(obj, Light):
+            new_objects.append(obj)
             continue
 
         dir_x = round(dx / dist, 2)

@@ -343,7 +343,7 @@ class Torch(Element):
 
     def __init__(self, position: Point, color:tuple = (1, 0, 0)):
         self.color = color
-        self.support = Cuboid(0.15, 0.15, 1, position + Point(0, 1, 0), texture=TORCH_TEXTURE)
+        self.support = Cuboid(0.15, 0.15, 1, position, texture=TORCH_TEXTURE)
         self.light = Light(position + Point(0, 1, 0), intensity=1, color=color)
         
         self.variation = 0
@@ -359,5 +359,3 @@ class Torch(Element):
         positives = [random.random()*0.01] * int(abs(self.variation - self.max_variation)*10)
         self.variation += random.choice(negatives + positives)
         self.variation = min(self.max_variation, max(self.min_variation, self.variation))
-
-        self.support.transformation(lambda x : rotate_point(x, get_z_rotation_matrix(0.1)))

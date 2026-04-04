@@ -1,4 +1,5 @@
 import pygame
+from math import pi
 
 from map import Map
 from src.render.utils import *
@@ -24,20 +25,58 @@ def get_cubes(map: Map) -> list:
                     ]))
     return cubes
 
-world = get_cubes(map)
+def create_torch(pos: Point, rotation_matrix: Callable = None):
+    t = Torch(pos)
+    if rotation_matrix is not None:
+        t.support.transformation(lambda x : rotate_point(x, rotation_matrix))
+    return t
 
-torch = Torch(Point(1.0, 0, 3.0))
+def get_torches(map: Map) -> list:
+    torches = []
+
+    for y, row in enumerate(map.map):
+        for x, room in enumerate(row):
+            if random.choice([True, True, True, False]):
+                continue
+
+            wall = random.choice([True, False])
+            side = random.choice([k for k, val in room.walls.items() if val])
+
+            # Position Y dépend de si la torche est sur le mur ou le sol
+            torch_y = L / 2 if wall else 0
+            
+            # Position X, Z et rotation dépendent du côté
+            if side == "left":
+                torch_pos = Point(x*L, torch_y, y*L + L/2)
+                rotation = get_z_rotation_matrix(-pi/4) if wall else None
+            elif side == "right":
+                torch_pos = Point(x*L + L, torch_y, y*L + L/2)
+                rotation = get_z_rotation_matrix(pi/4) if wall else None
+            elif side == "top":
+                torch_pos = Point(x*L + L/2, torch_y, y*L)
+                rotation = get_x_rotation_matrix(pi/4) if wall else None
+            else:
+                torch_pos = Point(x*L + L/2, torch_y, y*L + L - 0.1)
+                rotation = get_x_rotation_matrix(-pi/4) if wall else None
+
+            torches.append(create_torch(torch_pos, rotation))
+
+    return torches
+
+torches = get_torches(map)
+world = get_cubes(map) + torches
 
 f = 0
 @main_3D(window, camera, map)
 def main():
     global f
     player_light = Light(camera.origine, 1, 10, (1, 0.5, 0))
-    filtered_world = filter_cubes(camera, map, world + [player_light] + [torch])
+    filtered_world = filter_cubes(camera, map, world + [player_light])
     camera.draw_world(window, filtered_world)
     
     if f % 1 == 0:
-        torch.tick()
+        for torch in torches:
+            torch.tick()
 
     f += 1
 
