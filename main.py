@@ -36,7 +36,7 @@ def get_torches(map: Map) -> list:
 
     for y, row in enumerate(map.map):
         for x, room in enumerate(row):
-            if random.choice([True, True, True, False]):
+            if random.choice([True, False]):
                 continue
 
             wall = random.choice([True, False])

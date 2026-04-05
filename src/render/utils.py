@@ -100,6 +100,8 @@ class Point(NamedTuple):
 class Point2D(NamedTuple):
     x:float
     y:float
+    x_original:float = 0.0
+    y_original:float = 0.0
 
 class Plan:
     def __init__(self, normal:Vector, d:float):

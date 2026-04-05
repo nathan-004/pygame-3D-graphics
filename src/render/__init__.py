@@ -123,12 +123,8 @@ def filter_cubes(camera: Camera, map: Map, objects: list[Object]) -> list:
             new_objects.append(obj)
             continue
         
-        if dist >= 5:
-            continue
-
-        if isinstance(obj, Light):
-            new_objects.append(obj)
-            continue
+        if dist >= 3:
+            continue      
 
         dir_x = round(dx / dist, 2)
         dir_z = round(dz / dist, 2)

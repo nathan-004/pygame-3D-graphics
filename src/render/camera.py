@@ -16,6 +16,9 @@ def draw_triangle_numba(
     x1, y1, z1, u1, v1t,
     x2, y2, z2, u2, v2t,
     x3, y3, z3, u3, v3t,
+    x1_orig, y1_orig,
+    x2_orig, y2_orig,
+    x3_orig, y3_orig,
     N, camera_position,
     lights: list[tuple],
     forward, right, up
@@ -84,8 +87,9 @@ def draw_triangle_numba(
                     g = 0
                     b = 0
 
-                    px = (x / width) * 2 - 1
-                    py = 1 - (y / height) * 2
+                    # Interpolate original normalized coordinates
+                    px = w1 * x1_orig + w2 * x2_orig + w3 * x3_orig
+                    py = w1 * y1_orig + w2 * y2_orig + w3 * y3_orig
 
                     dir_x = forward[0] + right[0]*px + up[0]*py
                     dir_y = forward[1] + right[1]*px + up[1]*py
@@ -242,12 +246,14 @@ class Camera:
                 triangles = face_to_triangles(clipped)
                 for triangle in triangles:
                     projected = []
+                    originals = []
                     for v in triangle:
                         p2d = projection_perspective(v, self.d)
                         screen_p = self.screen(p2d, surface)
                         projected.append(Point(screen_p.x, screen_p.y, v.z, v.u, v.v))
+                        originals.append((screen_p.x_original, screen_p.y_original))
                     if object.texture:
-                        self.draw_triangle(pixels, self.get_current_texture(object.texture, idx), surface.get_size(), *projected)
+                        self.draw_triangle(pixels, self.get_current_texture(object.texture, idx), surface.get_size(), *projected, originals)
                     else:
                         pygame.gfxdraw.filled_polygon(surface, projected, object.fill_color)
         del pixels
@@ -255,12 +261,19 @@ class Camera:
             for key in list(self.textures.keys()):
                 del self.textures[key]
 
-    def draw_triangle(self, pixels: pygame.surfarray.pixels3d, tex_pixels: pygame.surfarray.pixels3d, surface_size: tuple, v1: Point, v2: Point, v3: Point):
+    def draw_triangle(self, pixels: pygame.surfarray.pixels3d, tex_pixels: pygame.surfarray.pixels3d, surface_size: tuple, v1: Point, v2: Point, v3: Point, originals: list = None):
+        if originals is None:
+            originals = [(0, 0), (0, 0), (0, 0)]
+        
         width, height = surface_size
 
         x1, y1, z1, u1, v1t = v1
         x2, y2, z2, u2, v2t = v2
         x3, y3, z3, u3, v3t = v3
+        
+        x1_orig, y1_orig = originals[0]
+        x2_orig, y2_orig = originals[1]
+        x3_orig, y3_orig = originals[2]
 
         area = abs(
             x1*(y2 - y3) +
@@ -295,6 +308,9 @@ class Camera:
             x1, y1, z1, u1, v1t,
             x2, y2, z2, u2, v2t,
             x3, y3, z3, u3, v3t,
+            x1_orig, y1_orig,
+            x2_orig, y2_orig,
+            x3_orig, y3_orig,
             N, (float(self.origine.x), float(self.origine.y), float(self.origine.z)),
             lights,
             forward, right, up
@@ -304,7 +320,9 @@ class Camera:
         w, h = surface.get_size()
         return Point2D(
             (p.x + 1) / 2 * w,
-            (1 - (p.y + 1) / 2) * h
+            (1 - (p.y + 1) / 2) * h,
+            p.x,  # x_original
+            p.y   # y_original
         )
     
     def world_to_camera(self, point):
