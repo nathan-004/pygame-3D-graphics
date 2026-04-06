@@ -4,7 +4,7 @@ import pygame
 
 from typing import NamedTuple, Callable
 
-from src.constants import L, TORCH_TEXTURE
+from src.constants import L, TORCH_TEXTURE, DISPLAY_SIGN
 
 def get_x_rotation_matrix(theta) -> list:
     return [
@@ -361,3 +361,11 @@ class Torch(Element):
         positives = [random.random()*0.01] * int(abs(self.variation - self.max_variation)*10)
         self.variation += random.choice(negatives + positives)
         self.variation = min(self.max_variation, max(self.min_variation, self.variation))
+
+class Sign(Element):
+    """Objet Panneau contenant le support + le panneau en lui-même"""
+
+    def __init__(self, display: pygame.Surface, pos: Point, support: bool = False):
+        self.display = Cuboid(0.01, 0.5, 1, pos, texture=[display, DISPLAY_SIGN, DISPLAY_SIGN, DISPLAY_SIGN, DISPLAY_SIGN, DISPLAY_SIGN])
+
+        super().__init__([self.display])
