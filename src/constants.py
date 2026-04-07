@@ -11,4 +11,4 @@ CEILING_TEXTURE = pygame.image.load("assets/slime1.jpg")
 TORCH_TEXTURE = [pygame.image.load("assets/torch.png")]*4 +[pygame.image.load("assets/torch_top.png"),
               pygame.image.load("assets/torch_bottom.png")]
 
-DISPLAY_SIGN = pygame.image.load("assets/slime1.jpg")
+DISPLAY_SIGN = pygame.image.load("assets/panneau.png")
