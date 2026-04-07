@@ -374,7 +374,7 @@ class Sign(Element):
     @staticmethod
     def from_text(text: str, pos: Point, support: bool = False):
         display = DISPLAY_SIGN.copy()
-        font = pygame.font.Font(None, 75)
+        font = pygame.font.Font(None, 20)
 
         text_surface = font.render(text, True, (0, 0, 0))
         text_rect = text_surface.get_rect(center=(display.get_width() // 2, display.get_height() // 2))
