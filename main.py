@@ -71,7 +71,7 @@ f = 0
 def main():
     global f
     player_light = Light(camera.origine, 1, 10, (1, 0.5, 0))
-    filtered_world = filter_cubes(camera, map, world + [player_light] + [Sign(WALL_TEXTURE, Point(1, 1, 4))])
+    filtered_world = filter_cubes(camera, map, world + [player_light] + [Sign.from_text("Ceci EST un TEST", Point(1, 1, 3))])
     camera.draw_world(window, filtered_world)
     
     if f % 1 == 0:
