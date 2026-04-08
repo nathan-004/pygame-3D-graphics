@@ -5,6 +5,7 @@ import pygame
 from typing import NamedTuple, Callable
 from copy import deepcopy
 
+from src.render.text import correct_text_placement
 from src.constants import L, TORCH_TEXTURE, DISPLAY_SIGN
 
 def get_x_rotation_matrix(theta) -> list:
@@ -374,10 +375,7 @@ class Sign(Element):
     @staticmethod
     def from_text(text: str, pos: Point, support: bool = False):
         display = DISPLAY_SIGN.copy()
-        font = pygame.font.Font(None, 20)
-
-        text_surface = font.render(text, True, (0, 0, 0))
-        text_rect = text_surface.get_rect(center=(display.get_width() // 2, display.get_height() // 2))
-        display.blit(text_surface, text_rect)
+        
+        correct_text_placement(text, display)
 
         return Sign(display, pos, support)
