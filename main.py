@@ -63,19 +63,22 @@ def get_torches(map: Map) -> list:
 
     return torches
 
+pygame.font.init()
+
 torches = get_torches(map)
-world = get_cubes(map) + torches
+sign = Sign.from_text("Ceci EST un TEST puissant", Point(1, 1, 3))
+world = get_cubes(map) + torches + [sign]
 
 f = 0
 @main_3D(window, camera, map)
 def main():
     global f
     player_light = Light(camera.origine, 1, 10, (1, 0.5, 0))
-    filtered_world = filter_cubes(camera, map, world + [player_light] + [Sign.from_text("Ceci EST un TEST puissant", Point(1, 1, 3))])
+    filtered_world = filter_cubes(camera, map, world + [player_light] + [sign])
     camera.draw_world(window, filtered_world)
     
     if f % 1 == 0:
-        for torch in torches:
+        for torch in torches + [sign]:
             torch.tick()
 
     f += 1

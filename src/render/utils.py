@@ -379,3 +379,6 @@ class Sign(Element):
         correct_text_placement(text, display)
 
         return Sign(display, pos, support)
+    
+    def tick(self):
+        self.display.transformation(lambda x: rotate_point(x, get_y_rotation_matrix(0.1)))
