@@ -66,7 +66,7 @@ def get_torches(map: Map) -> list:
 pygame.font.init()
 
 torches = get_torches(map)
-sign = Sign.from_text("Ceci EST un TEST puissant", Point(1, 1, 3))
+sign = Sign.from_text("Ceci EST un TEST puissant", Point(1, 1, 3), support=True)
 world = get_cubes(map) + torches + [sign]
 
 f = 0

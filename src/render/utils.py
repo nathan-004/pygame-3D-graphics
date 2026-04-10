@@ -6,7 +6,7 @@ from typing import NamedTuple, Callable
 from copy import deepcopy
 
 from src.render.text import correct_text_placement
-from src.constants import L, TORCH_TEXTURE, DISPLAY_SIGN
+from src.constants import L, TORCH_TEXTURE, DISPLAY_SIGN, SUPPORT_SIGN
 
 def get_x_rotation_matrix(theta) -> list:
     return [
@@ -368,9 +368,15 @@ class Sign(Element):
     """Objet Panneau contenant le support + le panneau en lui-même"""
 
     def __init__(self, display: pygame.Surface, pos: Point, support: bool = False):
-        self.display = Cuboid(0.01, 0.5, 1, pos, texture=[display, DISPLAY_SIGN, DISPLAY_SIGN, DISPLAY_SIGN, DISPLAY_SIGN, DISPLAY_SIGN])
+        l, L, h = 0.05, 0.5, 1
+        self.display = Cuboid(l, L, h, pos, texture=[display, DISPLAY_SIGN, DISPLAY_SIGN, DISPLAY_SIGN, DISPLAY_SIGN, DISPLAY_SIGN])
 
-        super().__init__([self.display])
+        if support:
+            self.support = Cuboid(l, 0.1, self.display.pos.y, Point(pos.x + L/2 - 0.05, 0, pos.z), texture=SUPPORT_SIGN)
+            super().__init__([self.display, self.support])
+        else:
+            self.support = None
+            super().__init__([self.display])
 
     @staticmethod
     def from_text(text: str, pos: Point, support: bool = False):
@@ -379,6 +385,3 @@ class Sign(Element):
         correct_text_placement(text, display)
 
         return Sign(display, pos, support)
-    
-    def tick(self):
-        self.display.transformation(lambda x: rotate_point(x, get_y_rotation_matrix(0.1)))
