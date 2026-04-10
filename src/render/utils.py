@@ -374,11 +374,11 @@ class Sign(Element):
     """Objet Panneau contenant le support + le panneau en lui-même"""
 
     def __init__(self, display: pygame.Surface, pos: Point, support: bool = False):
-        l, L, h = 0.05, 0.5, 1
-        self.display = Cuboid(l, L, h, pos, texture=[display, DISPLAY_SIGN, DISPLAY_SIGN, DISPLAY_SIGN, DISPLAY_SIGN, DISPLAY_SIGN])
+        self.l, self.L, self.h = 0.05, 1, 1
+        self.display = Cuboid(self.l, self.L, self.h, pos, texture=[display, DISPLAY_SIGN, DISPLAY_SIGN, DISPLAY_SIGN, DISPLAY_SIGN, DISPLAY_SIGN])
 
         if support:
-            self.support = Cuboid(l, 0.1, self.display.pos.y, Point(pos.x + L/2 - 0.05, 0, pos.z), texture=SUPPORT_SIGN)
+            self.support = Cuboid(self.l, 0.1, self.display.pos.y, Point(pos.x + self.L/2 - 0.05, 0, pos.z), texture=SUPPORT_SIGN)
             super().__init__([self.display, self.support])
         else:
             self.support = None
@@ -393,7 +393,7 @@ class Sign(Element):
         return Sign(display, pos, support)
     
     def tick(self):
-        center_display = Point(0.25, 0.5, 0.025)
+        center_display = Point(self.L*0.5, self.h*0.5, self.l*0.5)
         self.display.transformation(lambda x: rotate_point(x - center_display, get_y_rotation_matrix(0.1)) + center_display)
 
         if self.support:
