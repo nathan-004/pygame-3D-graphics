@@ -342,6 +342,12 @@ class Element:
     def tick(self):
         pass
 
+    def transformation(self, f: Callable):
+        """Exerce la transformation sur tous les objets de l'élément"""
+        for obj in self.objects:
+            if isinstance(obj, Object):
+                obj.transformation(f)
+
 class Torch(Element):
     """Objet torche contenant le support + lumière"""
 
@@ -385,3 +391,11 @@ class Sign(Element):
         correct_text_placement(text, display)
 
         return Sign(display, pos, support)
+    
+    def tick(self):
+        center_display = Point(0.25, 0.5, 0.025)
+        self.display.transformation(lambda x: rotate_point(x - center_display, get_y_rotation_matrix(0.1)) + center_display)
+
+        if self.support:
+            center_support = Point(0.05, self.support.pos.y / 2, 0.025)
+            self.support.transformation(lambda x: rotate_point(x - center_support, get_y_rotation_matrix(0.1)) + center_support)
