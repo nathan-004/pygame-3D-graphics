@@ -3,8 +3,8 @@ from math import pi
 
 from map import Map
 from src.render.utils import *
-from src.constants import *
 from src.render.camera import Camera
+from src.constants import *
 
 from src.render import main_3D, filter_cubes
 
@@ -39,7 +39,7 @@ def get_torches(map: Map) -> list:
             if random.choice([True, False]):
                 continue
 
-            wall = random.choice([True, False])
+            wall = random.choice([True, True])
             side = random.choice([k for k, val in room.walls.items() if val])
 
             # Position Y dépend de si la torche est sur le mur ou le sol
@@ -67,18 +67,19 @@ pygame.font.init()
 
 torches = get_torches(map)
 sign = Sign.from_text("Ceci EST un TEST puissant", Point(1, 1, 3), support=True)
-world = get_cubes(map) + torches + [sign]
+ennemy = Ennemy(Point(1,0,4), MONSTER_TEXTURE)
+world = get_cubes(map) + torches + [sign] + [ennemy]
 
 f = 0
 @main_3D(window, camera, map)
 def main():
     global f
     player_light = Light(camera.origine, 1, 10, (1, 0.5, 0))
-    filtered_world = filter_cubes(camera, map, world + [player_light] + [sign])
+    filtered_world = filter_cubes(camera, map, world + [player_light])
     camera.draw_world(window, filtered_world)
     
     if f % 1 == 0:
-        for torch in torches + [sign]:
+        for torch in torches: # + [sign]
             torch.tick()
 
     f += 1

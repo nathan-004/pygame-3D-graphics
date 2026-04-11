@@ -399,3 +399,8 @@ class Sign(Element):
         if self.support:
             center_support = Point(0.05, self.support.pos.y / 2, 0.025)
             self.support.transformation(lambda x: rotate_point(x - center_support, get_y_rotation_matrix(0.1)) + center_support)
+
+class Ennemy(Element):
+    def __init__(self, pos: Point, texture: pygame.Surface | list):
+        self.face = Square(3, pos, texture=texture)
+        super().__init__([self.face])

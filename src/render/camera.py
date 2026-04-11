@@ -10,6 +10,7 @@ from src.render.utils import *
 def draw_triangle_numba(
     pixels,
     tex_pixels,
+    tex_alpha,
     zbuffer,
     width,
     height,
@@ -80,6 +81,13 @@ def draw_triangle_numba(
                         ty = 0
                     elif ty >= tex_h:
                         ty = tex_h - 1
+
+                    # Vérifier la transparence (alphamask)
+                    alpha = tex_alpha[tx, ty]
+                    if alpha == 0:  # Pixel complètement transparent
+                        w1 += dw1_dx * N
+                        w2 += dw2_dx * N
+                        continue
 
                     color = tex_pixels[tx, ty]
 
@@ -253,7 +261,8 @@ class Camera:
                         projected.append(Point(screen_p.x, screen_p.y, v.z, v.u, v.v))
                         originals.append((screen_p.x_original, screen_p.y_original))
                     if object.texture:
-                        self.draw_triangle(pixels, self.get_current_texture(object.texture, idx), surface.get_size(), *projected, originals)
+                        tex_data = self.get_current_texture(object.texture, idx)
+                        self.draw_triangle(pixels, tex_data, surface.get_size(), *projected, originals)
                     else:
                         pygame.gfxdraw.filled_polygon(surface, projected, object.fill_color)
         del pixels
@@ -261,9 +270,12 @@ class Camera:
             for key in list(self.textures.keys()):
                 del self.textures[key]
 
-    def draw_triangle(self, pixels: pygame.surfarray.pixels3d, tex_pixels: pygame.surfarray.pixels3d, surface_size: tuple, v1: Point, v2: Point, v3: Point, originals: list = None):
+    def draw_triangle(self, pixels: pygame.surfarray.pixels3d, tex_data: tuple, surface_size: tuple, v1: Point, v2: Point, v3: Point, originals: list = None):
         if originals is None:
             originals = [(0, 0), (0, 0), (0, 0)]
+        
+        # Dépacker les données RGB et alpha
+        tex_pixels, tex_alpha = tex_data
         
         width, height = surface_size
 
@@ -302,6 +314,7 @@ class Camera:
         draw_triangle_numba(
             pixels,
             tex_pixels,
+            tex_alpha,
             self.zbuffer,
             width,
             height,
@@ -346,7 +359,12 @@ class Camera:
         if texture in self.textures:
             return self.textures[texture]
         
-        self.textures[texture] = pygame.surfarray.pixels3d(texture)
+        # Récupère les pixels RGB et le canal alpha
+        texture = texture.convert_alpha()
+        tex_rgb = pygame.surfarray.pixels3d(texture)
+        tex_alpha = pygame.surfarray.pixels_alpha(texture)
+        
+        self.textures[texture] = (tex_rgb, tex_alpha)
         return self.textures[texture]
 
     @property

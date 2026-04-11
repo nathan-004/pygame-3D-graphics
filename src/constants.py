@@ -13,3 +13,5 @@ TORCH_TEXTURE = [pygame.image.load("assets/torch.png")]*4 +[pygame.image.load("a
 
 DISPLAY_SIGN = pygame.image.load("assets/panneau.png")
 SUPPORT_SIGN = pygame.image.load("assets/panneau_pied.png")
+
+MONSTER_TEXTURE = pygame.image.load("assets/googoogaga.webp")
