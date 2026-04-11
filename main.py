@@ -67,7 +67,7 @@ pygame.font.init()
 
 torches = get_torches(map)
 sign = Sign.from_text("Ceci EST un TEST puissant", Point(1, 1, 3), support=True)
-ennemy = Ennemy(Point(1,0,4), MONSTER_TEXTURE)
+ennemy = Ennemy(Point(1,0,4), MONSTER_TEXTURE, camera)
 world = get_cubes(map) + torches + [sign] + [ennemy]
 
 f = 0
@@ -79,7 +79,7 @@ def main():
     camera.draw_world(window, filtered_world)
     
     if f % 1 == 0:
-        for torch in torches: # + [sign]
+        for torch in torches + [ennemy]: # + [sign]
             torch.tick()
 
     f += 1
