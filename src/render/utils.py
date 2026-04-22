@@ -1,4 +1,4 @@
-from math import cos, sin, floor, atan2
+from math import cos, sin, pi, atan2
 import random
 import pygame
 
@@ -28,6 +28,13 @@ def get_z_rotation_matrix(theta) -> list:
         [sin(theta), cos(theta), 0],
         [0, 0, 1]
     ]
+
+def normalize_angle(a):
+    while a > pi:
+        a -= 2*pi
+    while a < -pi:
+        a += 2*pi
+    return a
 
 class Vector:
     def __init__(self, x:float, y:float, z:float):
@@ -402,26 +409,39 @@ class Sign(Element):
 
 class Ennemy(Element):
     def __init__(self, pos: Point, texture: pygame.Surface | list, camera):
-        self.face = Square(3, pos, texture=texture)
+        self.s = 3
+        self.face = Square(self.s, pos, texture=texture)
+        self._initial_vertices = deepcopy(self.face._vertices)
+
         self.pos = pos
+
         self.speed = 0.05
+        self.rotation_frames = 1
+        self.current_angle = pi
+
         self.camera = camera
         super().__init__([self.face])
 
     def tick(self):
-        # Direction vers la caméra
         dx = self.camera.origine.x - self.pos.x
         dz = self.camera.origine.z - self.pos.z
         
-        # Angle pour regarder vers la caméra
         angle_to_camera = atan2(dz, dx)
+        print(angle_to_camera, dz, dx)
 
-        # Déplacer vers la caméra
         new_x = self.pos.x + cos(angle_to_camera) * self.speed
         new_z = self.pos.z + sin(angle_to_camera) * self.speed
         self.pos = Point(new_x, self.pos.y, new_z)
-        
-        # Mettre à jour la position de la face
-        delta_x = new_x - self.face.pos.x
-        delta_z = new_z - self.face.pos.z
-        self.face.pos = Point(new_x, self.face.pos.y, new_z)
+
+        #self.face.pos = Point(new_x, self.face.pos.y, new_z)
+
+        # Rotation vers la caméra
+        angle_diff = normalize_angle(angle_to_camera - self.current_angle)
+        self.current_angle = normalize_angle(self.current_angle + angle_diff / self.rotation_frames)
+
+        self.face._vertices = deepcopy(self._initial_vertices)
+
+        center = Point(self.s * 0.5, 0, self.s * 0.5)
+        self.face.transformation(
+            lambda x: rotate_point(x - center, get_y_rotation_matrix(-self.current_angle)) + center
+        )
