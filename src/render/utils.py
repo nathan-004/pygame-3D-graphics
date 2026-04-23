@@ -427,7 +427,7 @@ class Ennemy(Element):
         dz = self.camera.origine.z - self.pos.z
         
         angle_to_camera = atan2(dz, dx)
-        print(angle_to_camera, dz, dx)
+        print(angle_to_camera, self.camera.origine, self.pos)
 
         new_x = self.pos.x + cos(angle_to_camera) * self.speed
         new_z = self.pos.z + sin(angle_to_camera) * self.speed
@@ -441,7 +441,7 @@ class Ennemy(Element):
 
         self.face._vertices = deepcopy(self._initial_vertices)
 
-        center = Point(self.s * 0.5, 0, self.s * 0.5)
+        center = Point(self.s * 0.5, 0, 0)
         self.face.transformation(
-            lambda x: rotate_point(x - center, get_y_rotation_matrix(-self.current_angle)) + center
+            lambda x: rotate_point(x - center, get_y_rotation_matrix(self.current_angle)) + center
         )
