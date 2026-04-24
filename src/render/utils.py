@@ -423,17 +423,11 @@ class Ennemy(Element):
         super().__init__([self.face])
 
     def tick(self):
-        dx = self.camera.origine.x - self.pos.x
-        dz = self.camera.origine.z - self.pos.z
-        
-        angle_to_camera = atan2(dz, dx)
-        print(angle_to_camera, self.camera.origine, self.pos)
+        dx = self.pos.x - self.camera.origine.x
+        dz = self.pos.z - self.camera.origine.z
 
-        new_x = self.pos.x + cos(angle_to_camera) * self.speed
-        new_z = self.pos.z + sin(angle_to_camera) * self.speed
-        self.pos = Point(new_x, self.pos.y, new_z)
-
-        #self.face.pos = Point(new_x, self.face.pos.y, new_z)
+        angle_to_camera = atan2(dz, dx) + pi/2
+        #print(self.current_angle, angle_to_camera, self.camera.origine, self.pos)
 
         # Rotation vers la caméra
         angle_diff = normalize_angle(angle_to_camera - self.current_angle)
@@ -443,5 +437,5 @@ class Ennemy(Element):
 
         center = Point(self.s * 0.5, 0, 0)
         self.face.transformation(
-            lambda x: rotate_point(x - center, get_y_rotation_matrix(self.current_angle)) + center
+            lambda x: rotate_point(x - center, get_y_rotation_matrix(-self.current_angle)) + center
         )
