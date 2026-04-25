@@ -427,7 +427,6 @@ class Ennemy(Element):
         dz = self.pos.z - self.camera.origine.z
 
         angle_to_camera = atan2(dz, dx) + pi/2
-        #print(self.current_angle, angle_to_camera, self.camera.origine, self.pos)
 
         # Rotation vers la caméra
         angle_diff = normalize_angle(angle_to_camera - self.current_angle)
@@ -439,3 +438,21 @@ class Ennemy(Element):
         self.face.transformation(
             lambda x: rotate_point(x - center, get_y_rotation_matrix(-self.current_angle)) + center
         )
+
+        # Avancer vers joueur
+        dx = self.camera.origine.x - self.pos.x
+        dz = self.camera.origine.z - self.pos.z
+
+        dist = (dx*dx + dz*dz) ** 0.5
+
+        if dist > 0:
+            dx /= dist
+            dz /= dist
+
+        self.pos = Point(
+            self.pos.x + dx * self.speed,
+            self.pos.y,
+            self.pos.z + dz * self.speed
+        )
+
+        self.face.pos = self.pos
