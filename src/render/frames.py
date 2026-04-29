@@ -4,7 +4,7 @@ import pygame
 frame_objects = []
 
 class FrameObject:
-    def __init__(self, path:str, frames_transition:int = 5, frame_width: int = None, frame_height: int = None, frames_per_row: int = None):
+    def __init__(self, path:str, frames_transition:int = 2, frame_width: int = None, frame_height: int = None, frames_per_row: int = None):
         """
         Parameters
         ----------
