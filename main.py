@@ -1,4 +1,6 @@
 import pygame
+pygame.init()
+
 from math import pi
 
 from map import Map
@@ -7,10 +9,12 @@ from src.render.camera import Camera
 from src.constants import *
 
 from src.render import main_3D, filter_cubes
-
-map = Map.random((10, 10))
+import src.render.frames as frames
 
 window = pygame.display.set_mode((1280, 780)) # (0, 0), pygame.FULLSCREEN
+
+map = Map.random((10, 10))
+print(window)
 camera = Camera(Point(1,L * 0.5,1), (window.get_width(), window.get_height()))
 
 def get_cubes(map: Map) -> list:
@@ -67,7 +71,7 @@ pygame.font.init()
 
 torches = get_torches(map)
 sign = Sign.from_text("Ceci EST un TEST puissant", Point(1, 1, 3), support=True)
-ennemy = Ennemy(Point(1,0,4), MONSTER_TEXTURE, camera)
+ennemy = Ennemy(Point(1,0,4), BAT_TEXTURE, camera)
 world = get_cubes(map) + torches + [sign] + [ennemy]
 
 f = 0
@@ -77,7 +81,10 @@ def main():
     player_light = Light(camera.origine, 1, 10, (1, 0.5, 0))
     filtered_world = filter_cubes(camera, map, world + [player_light])
     camera.draw_world(window, filtered_world)
-    
+
+    for anim in frames.frame_objects:
+        anim.tick(f)
+
     if f % 1 == 0:
         for torch in torches + [ennemy]: # + [sign]
             torch.tick()

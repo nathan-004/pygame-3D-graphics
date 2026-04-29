@@ -33,7 +33,7 @@ class Map:
         m = Map.from_map(
             Map(size)._create_maze((0, 1))
         )
-        m.create_image()
+        #m.create_image()
         return m
     
     def _create_maze(self, start_pos:tuple):
@@ -162,7 +162,6 @@ class Map:
         cell_size: int
             taille en pixels d'une cellule
         """
-        pygame.init()
         width_px = cell_size * self.width
         height_px = cell_size * self.height
         surface = pygame.Surface((width_px, height_px), pygame.SRCALPHA)
@@ -174,7 +173,6 @@ class Map:
         try:
             pygame.image.save(surface, filename)
         except Exception as e:
-            pygame.quit()
             print(e)
             raise
 

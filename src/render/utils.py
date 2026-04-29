@@ -455,4 +455,4 @@ class Ennemy(Element):
             self.pos.z + dz * self.speed
         )
 
-        self.face.pos = self.pos
+        #self.face.pos = self.pos

@@ -5,6 +5,7 @@ from math import atan
 
 from src.constants import L, K
 from src.render.utils import *
+from src.render.frames import FrameObject
 
 @njit(fastmath = True)
 def draw_triangle_numba(
@@ -356,6 +357,8 @@ class Camera:
     def get_current_texture(self, texture, idx):
         if type(texture) is list:
             texture = texture[idx]
+        elif type(texture) is FrameObject:
+            texture = texture.texture
         if texture in self.textures:
             return self.textures[texture]
         
