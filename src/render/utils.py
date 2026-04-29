@@ -427,7 +427,6 @@ class Ennemy(Element):
         dz = self.pos.z - self.camera.origine.z
 
         angle_to_camera = atan2(dz, dx) + pi/2
-        print(angle_to_camera, dx, dz, )
 
         # Rotation vers la caméra
         angle_diff = normalize_angle(angle_to_camera - self.current_angle)
