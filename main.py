@@ -11,7 +11,7 @@ from src.constants import *
 from src.render import main_3D, filter_cubes
 import src.render.frames as frames
 
-window = pygame.display.set_mode((1280, 780)) # (0, 0), pygame.FULLSCREEN
+window = pygame.display.set_mode((780, 780)) # (0, 0), pygame.FULLSCREEN
 
 map = Map.random((10, 10))
 print(window)
@@ -71,7 +71,7 @@ pygame.font.init()
 
 torches = get_torches(map)
 sign = Sign.from_text("Ceci EST un TEST puissant", Point(1, 1, 3), support=True)
-test_obj = Object.from_file("assets/CUBE.obj", Point(1, 0, 4),texture=CEILING_TEXTURE)
+test_obj = Object.from_file("assets/CUBE.obj", Point(2.5, 2.5, 2.5),texture=CUBE_TEXTURES)
 #ennemy = Ennemy(Point(1,0,4), BAT_TEXTURE, camera)
 world = get_cubes(map) + torches + [sign] + [test_obj] #[ennemy]
 

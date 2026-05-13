@@ -50,6 +50,7 @@ def load_shape_from_obj(file_path):
                     vertices.append(vertex)
 
                 elif line.startswith("vt "):
+                    print(line, line[3:].strip().split())
                     uv = list(map(float, line[3:].strip().split()))
                     uvs.append(uv)
 
@@ -63,14 +64,13 @@ def load_shape_from_obj(file_path):
                     for vert in line[2:].strip().split():
                         parts = vert.split("/")
                         vertex_index = int(parts[0])
-                        face.append(vertex_index)
+                        face.append(vertex_index-1)
 
                     faces.append(tuple(face))
-
+        print(len(vertices), uvs)
         if len(uvs) < len(vertices):
             uvs += [[0, 0],] * (len(vertices) - len(uvs))
-        print(uvs)
-
+        
         return {
             "vertices": vertices,
             "uvs": uvs,
@@ -239,6 +239,7 @@ class Object:
             raise AssertionError("Erreur lors du chargement du fichier")
         
         points, uvs = res["vertices"], res["uvs"]
+        print(len(points), len(uvs))
         vertices = [Point(*tuple(vertice + uv)) for vertice, uv in zip(points, uvs)]
         
         faces = res["faces"]
