@@ -36,6 +36,51 @@ def normalize_angle(a):
         a += 2*pi
     return a
 
+def load_shape_from_obj(file_path):
+    try:
+        vertices = []
+        uvs = []
+        normals = []
+        faces = []
+
+        with open(file_path) as f:
+            for line in f:
+                if line.startswith("v "):
+                    vertex = list(map(float, line[2:].strip().split()))
+                    vertices.append(vertex)
+
+                elif line.startswith("vt "):
+                    uv = list(map(float, line[3:].strip().split()))
+                    uvs.append(uv)
+
+                elif line.startswith("vn "):
+                    normal = list(map(float, line[3:].strip().split()))
+                    normals.append(normal)
+
+                elif line.startswith("f "):
+                    face = []
+
+                    for vert in line[2:].strip().split():
+                        parts = vert.split("/")
+                        vertex_index = int(parts[0])
+                        face.append(vertex_index)
+
+                    faces.append(tuple(face))
+
+        if len(uvs) < len(vertices):
+            uvs += [[0, 0],] * (len(vertices) - len(uvs))
+        print(uvs)
+
+        return {
+            "vertices": vertices,
+            "uvs": uvs,
+            #"normals": normals,
+            "faces": faces
+        }
+
+    except FileNotFoundError:
+        print(f"{file_path} not found.")
+
 class Vector:
     def __init__(self, x:float, y:float, z:float):
         self.x, self.y, self.z = x, y, z
@@ -185,6 +230,20 @@ class Object:
     def transformation(self, f: Callable):
         for idx, p in enumerate(self._vertices):
             self._vertices[idx] = f(p)
+
+    @staticmethod
+    def from_file(file_path: str, pos: Point, fill_color: pygame.Color = None, texture: pygame.Surface = None):
+        res = load_shape_from_obj(file_path)
+
+        if res is None:
+            raise AssertionError("Erreur lors du chargement du fichier")
+        
+        points, uvs = res["vertices"], res["uvs"]
+        vertices = [Point(*tuple(vertice + uv)) for vertice, uv in zip(points, uvs)]
+        
+        faces = res["faces"]
+        print(vertices, faces)
+        return Object(vertices, [], faces, pos, fill_color, texture)
 
 class Light:
     def __init__(self, pos:Point, intensity:float = 0.5, radius:float = 7, color:tuple = (1,1,1)):

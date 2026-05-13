@@ -19,4 +19,3 @@ SUPPORT_SIGN = pygame.image.load("assets/panneau_pied.png")
 MONSTER_TEXTURE = pygame.image.load("assets/googoogaga.webp")
 
 BAT_TEXTURE = frames.FrameObject("assets/DarkFantasyEnemies_FREE/Bat/Bat without VFX/Bat-IdleFly.png", frame_width=64, frame_height=64)
-print(frames.frame_objects)
