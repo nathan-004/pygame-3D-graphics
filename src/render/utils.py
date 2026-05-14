@@ -41,16 +41,22 @@ def load_shape_from_obj(file_path):
         vertices = []
         uvs = []
         normals = []
-        faces = []
+
+        final_vertices = []
+        final_uvs = []
+        final_normals = []
+        final_faces = []
+
+        unique_vertices = {}
 
         with open(file_path) as f:
             for line in f:
+                # Positions
                 if line.startswith("v "):
                     vertex = list(map(float, line[2:].strip().split()))
                     vertices.append(vertex)
 
                 elif line.startswith("vt "):
-                    print(line, line[3:].strip().split())
                     uv = list(map(float, line[3:].strip().split()))
                     uvs.append(uv)
 
@@ -60,23 +66,54 @@ def load_shape_from_obj(file_path):
 
                 elif line.startswith("f "):
                     face = []
-
                     for vert in line[2:].strip().split():
                         parts = vert.split("/")
-                        vertex_index = int(parts[0])
-                        face.append(vertex_index-1)
+                        v_idx = int(parts[0]) - 1
 
-                    faces.append(tuple(face))
-        print(len(vertices), uvs)
-        if len(uvs) < len(vertices):
-            uvs += [[0, 0],] * (len(vertices) - len(uvs))
-        
+                        vt_idx = (
+                            int(parts[1]) - 1
+                            if len(parts) > 1 and parts[1]
+                            else None
+                        )
+
+                        vn_idx = (
+                            int(parts[2]) - 1
+                            if len(parts) > 2 and parts[2]
+                            else None
+                        )
+
+                        key = (v_idx, vt_idx, vn_idx)
+
+                        if key not in unique_vertices:
+                            new_index = len(final_vertices)
+                            unique_vertices[key] = new_index
+                            final_vertices.append(vertices[v_idx])
+
+                            final_uvs.append(
+                                uvs[vt_idx]
+                                if vt_idx is not None
+                                else [0.0, 0.0]
+                            )
+
+                            final_normals.append(
+                                normals[vn_idx]
+                                if vn_idx is not None
+                                else [0.0, 0.0, 0.0]
+                            )
+
+                        face.append(unique_vertices[key])
+
+                    final_faces.append(tuple(face))
+
         return {
-            "vertices": vertices,
-            "uvs": uvs,
-            #"normals": normals,
-            "faces": faces
+            "vertices": final_vertices,
+            "uvs": final_uvs,
+            "normals": final_normals,
+            "faces": final_faces
         }
+
+    except FileNotFoundError:
+        print(f"{file_path} not found.")
 
     except FileNotFoundError:
         print(f"{file_path} not found.")
@@ -239,11 +276,9 @@ class Object:
             raise AssertionError("Erreur lors du chargement du fichier")
         
         points, uvs = res["vertices"], res["uvs"]
-        print(len(points), len(uvs))
         vertices = [Point(*tuple(vertice + uv)) for vertice, uv in zip(points, uvs)]
         
         faces = res["faces"]
-        print(vertices, faces)
         return Object(vertices, [], faces, pos, fill_color, texture)
 
 class Light:
