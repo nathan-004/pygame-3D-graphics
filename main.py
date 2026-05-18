@@ -72,8 +72,8 @@ pygame.font.init()
 torches = get_torches(map)
 sign = Sign.from_text("Ceci EST un TEST puissant", Point(1, 1, 3), support=True)
 test_obj = Object.from_file("assets/CUBE.obj", Point(2.5, 2.5, 2.5),texture=CUBE_TEXTURES)
-#ennemy = Ennemy(Point(1,0,4), BAT_TEXTURE, camera)
-world = get_cubes(map) + torches + [sign] + [test_obj] #[ennemy]
+ennemy = Ennemy(Point(1,0,4), BAT_TEXTURE, camera)
+world = get_cubes(map) + torches + [sign] + [test_obj] + [ennemy]
 
 f = 0
 @main_3D(window, camera, map)
@@ -87,7 +87,7 @@ def main():
         anim.tick(f)
 
     if f % 1 == 0:
-        for torch in torches: #[ennemy]: # + [sign]
+        for torch in torches + [ennemy]: # + [sign]
             torch.tick()
 
     f += 1

@@ -535,7 +535,7 @@ class Ennemy(Element):
         )
 
         # Avancer vers joueur
-        dx = self.camera.origine.x - self.pos.x
+        dx = self.camera.origine.x - self.pos.x - 1.5
         dz = self.camera.origine.z - self.pos.z
 
         dist = (dx*dx + dz*dz) ** 0.5
