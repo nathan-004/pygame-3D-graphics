@@ -4,6 +4,7 @@ import src.render.frames as frames
 
 L = 5.0 # Longueur d'une salle
 K = 0.1 # Facteur diminution intensité lumière
+COLLISION_RADIUS = 3
 
 # Textures
 WALL_TEXTURE = pygame.image.load("assets/mur_texture.jpg")
