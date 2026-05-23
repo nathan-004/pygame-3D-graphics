@@ -227,49 +227,51 @@ class Camera:
         if object.fill_color is None and object.texture is None:
             return
         
-        pixels = pygame.surfarray.pixels3d(surface)
-        for idx, points in enumerate(object.faces):
-            if type(object.texture) is list:
-                if object.texture[idx] is None:
+        try:
+            pixels = pygame.surfarray.pixels3d(surface)
+            for idx, points in enumerate(object.faces):
+                if type(object.texture) is list:
+                    if object.texture[idx] is None:
+                        continue
+                    
+                cam_points = [self.world_to_camera(object.points[i]) for i in points]
+
+                if all(p.z < near for p in cam_points):
                     continue
-                
-            cam_points = [self.world_to_camera(object.points[i]) for i in points]
 
-            if all(p.z < near for p in cam_points):
-                continue
+                clipped = []
 
-            clipped = []
+                for p1, p2 in zip(cam_points, cam_points[1:] + cam_points[:1]):
+                    if p1.z >= near and p2.z >= near:
+                        clipped.append(p2)
 
-            for p1, p2 in zip(cam_points, cam_points[1:] + cam_points[:1]):
-                if p1.z >= near and p2.z >= near:
-                    clipped.append(p2)
+                    elif p1.z >= near and p2.z < near:
+                        clipped.append(intersect_near(p1, p2, near))
 
-                elif p1.z >= near and p2.z < near:
-                    clipped.append(intersect_near(p1, p2, near))
+                    elif p1.z < near and p2.z >= near:
+                        clipped.append(intersect_near(p1, p2, near))
+                        clipped.append(p2)
 
-                elif p1.z < near and p2.z >= near:
-                    clipped.append(intersect_near(p1, p2, near))
-                    clipped.append(p2)
-
-            if len(clipped) >= 3:
-                triangles = face_to_triangles(clipped)
-                for triangle in triangles:
-                    projected = []
-                    originals = []
-                    for v in triangle:
-                        p2d = projection_perspective(v, self.d)
-                        screen_p = self.screen(p2d, surface)
-                        projected.append(Point(screen_p.x, screen_p.y, v.z, v.u, v.v))
-                        originals.append((screen_p.x_original, screen_p.y_original))
-                    if object.texture:
-                        tex_data = self.get_current_texture(object.texture, idx)
-                        self.draw_triangle(pixels, tex_data, surface.get_size(), *projected, originals)
-                    else:
-                        pygame.gfxdraw.filled_polygon(surface, projected, object.fill_color)
-        del pixels
-        if object.texture:
-            for key in list(self.textures.keys()):
-                del self.textures[key]
+                if len(clipped) >= 3:
+                    triangles = face_to_triangles(clipped)
+                    for triangle in triangles:
+                        projected = []
+                        originals = []
+                        for v in triangle:
+                            p2d = projection_perspective(v, self.d)
+                            screen_p = self.screen(p2d, surface)
+                            projected.append(Point(screen_p.x, screen_p.y, v.z, v.u, v.v))
+                            originals.append((screen_p.x_original, screen_p.y_original))
+                        if object.texture:
+                            tex_data = self.get_current_texture(object.texture, idx)
+                            self.draw_triangle(pixels, tex_data, surface.get_size(), *projected, originals)
+                        else:
+                            pygame.gfxdraw.filled_polygon(surface, projected, object.fill_color)
+        finally:
+            del pixels
+            if object.texture:
+                for key in list(self.textures.keys()):
+                    del self.textures[key]
 
     def draw_triangle(self, pixels: pygame.surfarray.pixels3d, tex_data: tuple, surface_size: tuple, v1: Point, v2: Point, v3: Point, originals: list = None):
         if originals is None:

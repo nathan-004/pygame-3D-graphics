@@ -144,7 +144,7 @@ def filter_cubes(camera: Camera, map: Map, objects: list[Object]) -> list:
 
 def init_params(parameters):
     """Remplit parameters si pas complet"""
-    availables = [("move", True), ("camera_direction", True)]
+    availables = [("move", True), ("camera_direction", True), ("pause", False)]
 
     for key, default in availables:
         if key not in parameters:

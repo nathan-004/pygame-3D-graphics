@@ -75,25 +75,35 @@ test_obj = Object.from_file("assets/CUBE.obj", Point(2.5, 2.5, 2.5),texture=CUBE
 ennemy = Ennemy(Point(1,0,4), BAT_TEXTURE, camera)
 world = get_cubes(map) + torches + [sign] + [ennemy] # [test_obj]
 
+fight_room = Cuboid(L*5, L*5, L*5, Point(0, 0, 0), texture=[WALL_TEXTURE, WALL_TEXTURE, WALL_TEXTURE, WALL_TEXTURE, CEILING_TEXTURE, FLOOR_TEXTURE])
+fight_scene = [fight_room]
+
 params = {}
 
 f = 0
 @main_3D(window, camera, map, params)
 def main():
     global f
-    player_light = Light(camera.origine, 1.5, 10, (1, 0.5, 0))
-    filtered_world = filter_cubes(camera, map, world + [player_light])
-    camera.draw_world(window, filtered_world)
 
-    for anim in frames.frame_objects:
-        anim.tick(f)
+    if not params["pause"]:
+        player_light = Light(camera.origine, 1.5, 10, (1, 0.5, 0))
+        filtered_world = filter_cubes(camera, map, world + [player_light])
+        camera.draw_world(window, filtered_world)
 
-    if f % 1 == 0:
-        for torch in torches + [ennemy]: # + [sign]
-            torch.tick()
+        for anim in frames.frame_objects:
+            anim.tick(f)
+
+        if f % 1 == 0:
+            for torch in torches + [ennemy]: # + [sign]
+                torch.tick()
             
-    if ((camera.origine.x - ennemy.pos.x)**2 + (camera.origine.y - ennemy.pos.y)**2 + (camera.origine.z - ennemy.pos.z)**2)**0.5 <= COLLISION_RADIUS:
-        params["move"] = False
+        if ((camera.origine.x - ennemy.pos.x)**2 + (camera.origine.y - ennemy.pos.y)**2 + (camera.origine.z - ennemy.pos.z)**2)**0.5 <= COLLISION_RADIUS:
+            params["move"] = False
+            params["pause"] = True
+    else:
+        camera.origine = Point(L, L, L)
+        player_light = Light(camera.origine, 5, 100, (1, 0.5, 0))
+        camera.draw_world(window, fight_scene + [player_light])
 
     f += 1
 

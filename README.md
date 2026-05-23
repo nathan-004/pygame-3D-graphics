@@ -7,3 +7,7 @@
 - [Pygame Optimization Methods](https://github.com/Rabbid76/PyGameExamplesAndAnswers/blob/master/documentation/pygame/pygame_surfacearray_pixelarray_and_bufferproxy.md)
 
 ## To-Do
+
+- [ ] Ajouter répétition texture n fois
+- [ ] Ajouter fonction scale pour `Object`
+- [ ] éviter chargement pixels3d et alpha_pixels à chaque frame
