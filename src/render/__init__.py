@@ -144,7 +144,7 @@ def filter_cubes(camera: Camera, map: Map, objects: list[Object]) -> list:
 
 def init_params(parameters):
     """Remplit parameters si pas complet"""
-    availables = [("move", True), ("camera_direction", True), ("pause", False)]
+    availables = [("move", True), ("camera_direction", True), ("pause", False), ("map", True)]
 
     for key, default in availables:
         if key not in parameters:
@@ -240,10 +240,11 @@ def main_3D(window: pygame.Surface, camera: Camera, map: Map, params: dict):
                     window.blit(origine_surface, (10, 35))
                     window.blit(direction_surface, (10, 60))
                     
-                    highlited = [(floor(obj.pos.x / L), floor(obj.pos.z / L)) for obj in camera.latest_draw]
+                    if params["map"]:
+                        highlited = [(floor(obj.pos.x / L), floor(obj.pos.z / L)) for obj in camera.latest_draw]
                     
-                    map.draw(map_surface, (floor(camera.origine.x / L), floor(camera.origine.z / L)), (camera.direction.x, camera.direction.z), highlited = highlited)
-                    window.blit(map_surface, (10, 80))
+                        map.draw(map_surface, (floor(camera.origine.x / L), floor(camera.origine.z / L)), (camera.direction.x, camera.direction.z), highlited = highlited)
+                        window.blit(map_surface, (10, 80))
 
                 mov = pygame.mouse.get_rel()
                 sens = 0.1

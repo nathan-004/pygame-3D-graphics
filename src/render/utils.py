@@ -184,7 +184,7 @@ class Point(NamedTuple):
                 return Point(self.x * other.x, self.y * other.y, self.z * other.z, other.u, other.v)
             return type(other)(self.x * other.x, self.y * other.y, self.z * other.z)
         elif isinstance(other, float) or isinstance(other, int):
-            return Vector(self.x * other, self.y * other, self.z * other)
+            return Point(self.x * other, self.y * other, self.z * other, self.u, self.v)
         else:
             raise NotImplementedError(f"{type(other)} cannot be mutliplied with Vector")
 

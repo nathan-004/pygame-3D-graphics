@@ -76,12 +76,15 @@ test_obj = Object.from_file("assets/CUBE.obj", Point(2.5, 2.5, 2.5),texture=CUBE
 ennemy = Ennemy(Point(1,0,4), BAT_TEXTURE, camera)
 world = get_cubes(map) + torches + [sign] + [ennemy] # [test_obj]
 
+fight_monster = Ennemy(Point(L*1, -2, L*3), MONSTER_TEXTURE, camera)
+fight_monster.tick()
+fight_monster.face.transformation(lambda x: x * 4)
 fight_room = Cuboid(
     L*4, L*4, L*4, Point(0, 0, 0), 
     texture=[WALL_TEXTURE, WALL_TEXTURE, WALL_TEXTURE, WALL_TEXTURE, CEILING_TEXTURE, FLOOR_TEXTURE],
     n_repetition=5    
 )
-fight_scene = [fight_room]
+fight_scene = [fight_room] + fight_monster.objects
 
 params = {}
 
@@ -107,6 +110,7 @@ def main():
             params["pause"] = True
             params["transition"] = True
             params["start_frame"] = window.copy()
+            params["map"] = False
     else:
         camera.origine = Point(L, 1, L)
         player_light = Light(camera.origine, 1, 200, (1, 0.5, 0))
