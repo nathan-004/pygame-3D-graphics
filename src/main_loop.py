@@ -75,8 +75,10 @@ test_obj = Object.from_file("assets/CUBE.obj", Point(2.5, 2.5, 2.5),texture=CUBE
 ennemy = Ennemy(Point(1,0,4), BAT_TEXTURE, camera)
 world = get_cubes(map) + torches + [sign] + [ennemy] # [test_obj]
 
+params = {}
+
 f = 0
-@main_3D(window, camera, map)
+@main_3D(window, camera, map, params)
 def main():
     global f
     player_light = Light(camera.origine, 1.5, 10, (1, 0.5, 0))
@@ -91,7 +93,7 @@ def main():
             torch.tick()
             
     if ((camera.origine.x - ennemy.pos.x)**2 + (camera.origine.y - ennemy.pos.y)**2 + (camera.origine.z - ennemy.pos.z)**2)**0.5 <= COLLISION_RADIUS:
-        print("COLLISION Detected")
+        params["move"] = False
 
     f += 1
 

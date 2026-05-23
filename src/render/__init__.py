@@ -142,7 +142,29 @@ def filter_cubes(camera: Camera, map: Map, objects: list[Object]) -> list:
 
     return new_objects
 
-def main_3D(window: pygame.Surface, camera: Camera, map: Map):
+def init_params(parameters):
+    """Remplit parameters si pas complet"""
+    availables = [("move", True), ("camera_direction", True)]
+
+    for key, default in availables:
+        if key not in parameters:
+            parameters[key] = default
+
+def main_3D(window: pygame.Surface, camera: Camera, map: Map, params: dict):
+    """
+    Boucle principale d'affichage 3D
+    Gestion de l'affichage des objets, des mouvements, ...
+
+    Parameters
+    ----------
+    window: pygame.Surface
+    camera: Camera
+    map: Map
+    params: dict
+        Contient les paramètres modifiables du jeu
+        Exemple : `params = {"move": True}`
+    """
+    init_params(params)
     def main_3D(func):
         def wrapper():
             # Initialisation
@@ -178,30 +200,31 @@ def main_3D(window: pygame.Surface, camera: Camera, map: Map):
 
                 keys = pygame.key.get_pressed()
                 
-                right = cross(camera.direction,Vector(0,1,0))
-                forward = normalize(cross(right, Vector(1,1,0)))
+                if params["move"]:
+                    right = cross(camera.direction,Vector(0,1,0))
+                    forward = normalize(cross(right, Vector(1,1,0)))
 
-                move = Vector(0,0,0)
+                    move = Vector(0,0,0)
 
-                cur_speed_move = speed_move
+                    cur_speed_move = speed_move
 
-                if keys[pygame.K_UP] or keys[pygame.K_z]:
-                    move = move - forward
+                    if keys[pygame.K_UP] or keys[pygame.K_z]:
+                        move = move - forward
 
-                if keys[pygame.K_DOWN] or keys[pygame.K_s]:
-                    move = move + forward
+                    if keys[pygame.K_DOWN] or keys[pygame.K_s]:
+                        move = move + forward
 
-                if keys[pygame.K_RIGHT] or keys[pygame.K_d]:
-                    move = move - right
+                    if keys[pygame.K_RIGHT] or keys[pygame.K_d]:
+                        move = move - right
 
-                if keys[pygame.K_LEFT] or keys[pygame.K_q]:
-                    move = move + right
+                    if keys[pygame.K_LEFT] or keys[pygame.K_q]:
+                        move = move + right
 
-                if keys[pygame.K_LSHIFT]:
-                    cur_speed_move += 2
+                    if keys[pygame.K_LSHIFT]:
+                        cur_speed_move += 2
 
-                if dot(move, move) != 0:
-                    move = normalize(move)
+                    if dot(move, move) != 0:
+                        move = normalize(move)
 
                 func()
 
@@ -226,22 +249,25 @@ def main_3D(window: pygame.Surface, camera: Camera, map: Map):
                 sens = 0.1
                 dt = clock.tick(60) / 1000
 
-                camera.yaw   += mov[0] * sens * dt
-                camera.pitch -= mov[1] * sens * dt
-                MAX_PITCH = 1.55
-                camera.pitch = max(-MAX_PITCH, min(MAX_PITCH, camera.pitch))
+                if params["camera_direction"]:
+                    camera.yaw   += mov[0] * sens * dt
+                    camera.pitch -= mov[1] * sens * dt
+                    MAX_PITCH = 1.55
+                    camera.pitch = max(-MAX_PITCH, min(MAX_PITCH, camera.pitch))
 
                 if f % 2 == 0:
                     pygame.mouse.set_pos((window.get_width() / 2, window.get_height() / 2))
                 pygame.display.update()
                 
                 start = camera.origine
-                end = move * dt * cur_speed_move * Vector(1, 0, 1) + camera.origine
                 
-                if collision:
-                    if cross_walls(map, start, end):
-                        continue
-                camera.origine = end
+                if params["move"]:
+                    end = move * dt * cur_speed_move * Vector(1, 0, 1) + camera.origine
+                
+                    if collision:
+                        if cross_walls(map, start, end):
+                            continue
+                    camera.origine = end
 
             exit()
         return wrapper
