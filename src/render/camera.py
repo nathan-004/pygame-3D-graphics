@@ -21,7 +21,8 @@ def draw_triangle_numba(
     x1_orig, y1_orig,
     x2_orig, y2_orig,
     x3_orig, y3_orig,
-    N, camera_position,
+    N, n_tex, 
+    camera_position,
     lights: list[tuple],
     forward, right, up
 ):
@@ -70,8 +71,11 @@ def draw_triangle_numba(
                     u = uz / iz
                     v = vz / iz
 
-                    tx = int(u * (tex_w - 1))
-                    ty = int((1.0 - v) * (tex_h - 1))
+                    u_tiled = u * n_tex % 1.0
+                    v_tiled = v * n_tex % 1.0
+
+                    tx = int(u_tiled * (tex_w - 1))
+                    ty = int((1.0 - v_tiled) * (tex_h - 1))
 
                     if tx < 0:
                         tx = 0
@@ -186,9 +190,9 @@ class Camera:
             [forward.x, forward.y, forward.z]
         ]
 
-    def draw_world(self, surface:pygame.Surface, objects: list[Object]):
+    def draw_world(self, surface:pygame.Surface, objects: list[Object], max_distance:float = L*3):
         self.latest_draw = objects
-        self.zbuffer = np.full((surface.get_height(), surface.get_width()), L * 3, dtype=np.float32)
+        self.zbuffer = np.full((surface.get_height(), surface.get_width()), max_distance, dtype=np.float32)
 
         self.lights = [obj for obj in objects if isinstance(obj, Light)]
         objects = [obj for obj in objects if not isinstance(obj, Light)]
@@ -264,7 +268,7 @@ class Camera:
                             originals.append((screen_p.x_original, screen_p.y_original))
                         if object.texture:
                             tex_data = self.get_current_texture(object.texture, idx)
-                            self.draw_triangle(pixels, tex_data, surface.get_size(), *projected, originals)
+                            self.draw_triangle(pixels, tex_data, surface.get_size(), *projected, object.N, originals)
                         else:
                             pygame.gfxdraw.filled_polygon(surface, projected, object.fill_color)
         finally:
@@ -273,7 +277,7 @@ class Camera:
                 for key in list(self.textures.keys()):
                     del self.textures[key]
 
-    def draw_triangle(self, pixels: pygame.surfarray.pixels3d, tex_data: tuple, surface_size: tuple, v1: Point, v2: Point, v3: Point, originals: list = None):
+    def draw_triangle(self, pixels: pygame.surfarray.pixels3d, tex_data: tuple, surface_size: tuple, v1: Point, v2: Point, v3: Point, n_tex:int, originals: list = None):
         if originals is None:
             originals = [(0, 0), (0, 0), (0, 0)]
         
@@ -295,7 +299,6 @@ class Camera:
             x2*(y3 - y1) +
             x3*(y1 - y2)
         ) / 2
-
 
         lights = [
             (
@@ -327,7 +330,7 @@ class Camera:
             x1_orig, y1_orig,
             x2_orig, y2_orig,
             x3_orig, y3_orig,
-            N, (float(self.origine.x), float(self.origine.y), float(self.origine.z)),
+            N, n_tex, (float(self.origine.x), float(self.origine.y), float(self.origine.z)),
             lights,
             forward, right, up
         )

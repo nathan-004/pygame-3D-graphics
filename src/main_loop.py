@@ -75,7 +75,11 @@ test_obj = Object.from_file("assets/CUBE.obj", Point(2.5, 2.5, 2.5),texture=CUBE
 ennemy = Ennemy(Point(1,0,4), BAT_TEXTURE, camera)
 world = get_cubes(map) + torches + [sign] + [ennemy] # [test_obj]
 
-fight_room = Cuboid(L*5, L*5, L*5, Point(0, 0, 0), texture=[WALL_TEXTURE, WALL_TEXTURE, WALL_TEXTURE, WALL_TEXTURE, CEILING_TEXTURE, FLOOR_TEXTURE])
+fight_room = Cuboid(
+    L*4, L*4, L*4, Point(0, 0, 0), 
+    texture=[WALL_TEXTURE, WALL_TEXTURE, WALL_TEXTURE, WALL_TEXTURE, CEILING_TEXTURE, FLOOR_TEXTURE],
+    n_repetition=5    
+)
 fight_scene = [fight_room]
 
 params = {}
@@ -101,9 +105,10 @@ def main():
             params["move"] = False
             params["pause"] = True
     else:
-        camera.origine = Point(L, L, L)
-        player_light = Light(camera.origine, 5, 100, (1, 0.5, 0))
-        camera.draw_world(window, fight_scene + [player_light])
+        camera.origine = Point(L, 1, L)
+        player_light = Light(camera.origine, 1, 200, (1, 0.5, 0))
+        ennemy_light = Light(Point(L*3, 1, L*3), 5, 200, (1, 0, 0))
+        camera.draw_world(window, fight_scene + [ennemy_light, player_light], max_distance=L*6)
 
     f += 1
 

@@ -247,7 +247,7 @@ def rotate_point(p: Point, rotation_matrix: list) -> Point:
     )
 
 class Object:
-    def __init__(self, vertices:list, edges:list, faces:list, pos: Point, fill_color: pygame.Color = None, texture: pygame.Surface = None):
+    def __init__(self, vertices:list, edges:list, faces:list, pos: Point, fill_color: pygame.Color = None, texture: pygame.Surface = None, n_repetition:int = 1):
         if type(fill_color) is list:
             assert len(fill_color) == len(faces), "Nombre de couleurs différent du nombre de faces"
         elif type(texture) is list:
@@ -259,6 +259,7 @@ class Object:
         self.faces = faces
         self.fill_color = fill_color
         self.texture = texture
+        self.N = n_repetition
 
     @property
     def points(self):
@@ -289,7 +290,7 @@ class Light:
         self.radius = radius
 
 class Cuboid(Object):
-    def __init__(self, l, L, h, pos, color:pygame.Color = None, texture: pygame.Surface = None):
+    def __init__(self, l, L, h, pos, color:pygame.Color = None, texture: pygame.Surface = None, n_repetition:int = 1):
         vertices = [
             # Front
             Point(0, 0, 0, 0, 0),
@@ -338,10 +339,10 @@ class Cuboid(Object):
             (0, 14, 15, 3)
         ]
 
-        super().__init__(vertices, edges, faces, pos, color, texture)
+        super().__init__(vertices, edges, faces, pos, color, texture, n_repetition)
 
 class Cube(Object):
-    def __init__(self, l, pos, color:pygame.Color = None, texture: pygame.Surface = None):
+    def __init__(self, l, pos, color:pygame.Color = None, texture: pygame.Surface = None, n_repetition:int = 1):
         vertices = [
             # Front
             Point(0, 0, 0, 0, 0),
@@ -390,7 +391,7 @@ class Cube(Object):
             (0, 14, 15, 3)
         ]
 
-        super().__init__(vertices, edges, faces, pos, color, texture)
+        super().__init__(vertices, edges, faces, pos, color, texture, n_repetition)
         
 class Square(Object):
     def __init__(self, l, pos, color:pygame.Color = None, texture: pygame.Surface = None, rotation_x:float = 0, rotation_y:float = 0, rotation_z:float = 0):
