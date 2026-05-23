@@ -8,6 +8,6 @@
 
 ## To-Do
 
-- [ ] Ajouter répétition texture n fois
+- [X] Ajouter répétition texture n fois
 - [ ] Ajouter fonction scale pour `Object`
 - [ ] éviter chargement pixels3d et alpha_pixels à chaque frame

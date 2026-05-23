@@ -10,6 +10,7 @@ from src.constants import *
 
 from src.render import main_3D, filter_cubes
 import src.render.frames as frames
+from src.render.transitions import fire_transition
 
 window = pygame.display.set_mode((780, 780)) # (0, 0), pygame.FULLSCREEN
 
@@ -104,10 +105,20 @@ def main():
         if ((camera.origine.x - ennemy.pos.x)**2 + (camera.origine.y - ennemy.pos.y)**2 + (camera.origine.z - ennemy.pos.z)**2)**0.5 <= COLLISION_RADIUS:
             params["move"] = False
             params["pause"] = True
+            params["transition"] = True
+            params["start_frame"] = window.copy()
     else:
         camera.origine = Point(L, 1, L)
         player_light = Light(camera.origine, 1, 200, (1, 0.5, 0))
         ennemy_light = Light(Point(L*3, 1, L*3), 5, 200, (1, 0, 0))
+
+        if params["transition"]:
+            start = params["start_frame"]
+            end = window.copy()
+            camera.draw_world(end, fight_scene + [ennemy_light, player_light], max_distance=L*6)
+            fire_transition(window, start, end)
+            params["transition"] = False
+        
         camera.draw_world(window, fight_scene + [ennemy_light, player_light], max_distance=L*6)
 
     f += 1
