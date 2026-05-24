@@ -90,16 +90,12 @@ fight_scene = [fight_room] + fight_monster.objects
 
 font = pygame.font.SysFont("arial", 32)
 
-escape_button = buttons.Button(
+escape_button = buttons.KeyButton(
+    pygame.K_e,
     lambda : print("ESCAPING"),
 
     base=buttons.ButtonDescriptor(
         display=font.render("ESCAPE", True, (255, 255, 255)),
-        pos=(300, 200)
-    ),
-
-    hover=buttons.ButtonDescriptor(
-        display=font.render("ESCAPE", True, (255, 255, 0)),
         pos=(300, 200)
     ),
 
@@ -144,6 +140,8 @@ def main():
         if params["transition"]:
             start = params["start_frame"]
             end = window.copy()
+            camera.pitch = 0
+            camera.yaw = 0.5
             camera.draw_world(end, fight_scene + [ennemy_light, player_light], max_distance=L*6)
             fire_transition(window, start, end)
             params["transition"] = False
