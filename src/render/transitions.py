@@ -8,7 +8,7 @@ def fire_transition(
     window: pygame.Surface, start: pygame.Surface, end: pygame.Surface,
     fire_color: tuple = (255, 100, 0),
     current_pixels=None,
-    fade_steps: int = 5,
+    fade_steps: int = 3,
     spread_chance: float = 0.5,
 ):
     w, h = window.get_width(), window.get_height()

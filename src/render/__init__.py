@@ -5,6 +5,8 @@ from src.constants import L
 from src.render.utils import *
 from src.render.camera import Camera
 
+import src.interface.buttons as buttons
+
 from map import Map
 
 def cross_walls(map: Map, start: Point, end: Point) -> bool:
@@ -144,7 +146,7 @@ def filter_cubes(camera: Camera, map: Map, objects: list[Object]) -> list:
 
 def init_params(parameters):
     """Remplit parameters si pas complet"""
-    availables = [("move", True), ("camera_direction", True), ("pause", False), ("map", True)]
+    availables = [("move", True), ("camera_direction", True), ("pause", False), ("map", True), ("mouse_rotation", True)]
 
     for key, default in availables:
         if key not in parameters:
@@ -188,6 +190,9 @@ def main_3D(window: pygame.Surface, camera: Camera, map: Map, params: dict):
                 fps = clock.get_fps()
                 pygame.draw.rect(window, (0, 0, 0), (0, 0, window.get_width(), window.get_height()))
                 for event in pygame.event.get():
+                    for b in buttons.CURRENT_BUTTONS:
+                        b.tick(event)
+
                     if event.type == pygame.QUIT:
                         done = True
                     if event.type == pygame.KEYDOWN:
@@ -245,19 +250,21 @@ def main_3D(window: pygame.Surface, camera: Camera, map: Map, params: dict):
                     
                         map.draw(map_surface, (floor(camera.origine.x / L), floor(camera.origine.z / L)), (camera.direction.x, camera.direction.z), highlited = highlited)
                         window.blit(map_surface, (10, 80))
-
-                mov = pygame.mouse.get_rel()
-                sens = 0.1
+                
                 dt = clock.tick(60) / 1000
 
-                if params["camera_direction"]:
+                if params["mouse_rotation"]:
+                    mov = pygame.mouse.get_rel()
+                    sens = 0.1
+                
                     camera.yaw   += mov[0] * sens * dt
                     camera.pitch -= mov[1] * sens * dt
                     MAX_PITCH = 1.55
                     camera.pitch = max(-MAX_PITCH, min(MAX_PITCH, camera.pitch))
 
-                if f % 2 == 0:
-                    pygame.mouse.set_pos((window.get_width() / 2, window.get_height() / 2))
+                    if f % 2 == 0:
+                        pygame.mouse.set_pos((window.get_width() / 2, window.get_height() / 2))
+                        
                 pygame.display.update()
                 
                 start = camera.origine
