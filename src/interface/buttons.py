@@ -36,7 +36,7 @@ class Button:
         self.current_state = 0
         self.action = f
         
-        CURRENT_BUTTONS.append(self)
+        activate(self)
     
     def tick(self, event):
         pass
@@ -87,9 +87,45 @@ class KeyButton(Button):
         if time.time() - self.last_time >= self.TIME_LIMIT:
             self.current_state = 0
         return res
+    
+def tunnel(current_buttons, new_buttons, exit_button: Button) -> Callable:
+    def wrapper():
+        saved_buttons = current_buttons.copy()
+
+        empty()
+
+        def exit():
+            empty()
+            CURRENT_BUTTONS.extend(saved_buttons)
+
+        exit_button.action = exit
+
+        def exit_on_end(f) -> Callable:
+            def new_function():
+                f()
+                exit()
+            return new_function
+        
+        for b in new_buttons:
+            b.action = exit_on_end(b.action)
+
+        new_buttons.append(exit_button)
+
+        CURRENT_BUTTONS.extend(new_buttons)
+    return wrapper
+
+def empty():
+    for _ in range(len(CURRENT_BUTTONS)):
+        CURRENT_BUTTONS.pop(0)
 
 def activate(button: Button):
     CURRENT_BUTTONS.append(button)
 
-def deactivate(button: Button):
-    CURRENT_BUTTONS.remove(button)
+def deactivate(button: Button | list):
+    if isinstance(button, Button):
+        CURRENT_BUTTONS.remove(button)
+    elif isinstance(button, list):
+        for b in button:
+            deactivate(b)
+    else:
+        raise TypeError()

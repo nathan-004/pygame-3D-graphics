@@ -90,21 +90,21 @@ fight_scene = [fight_room] + fight_monster.objects
 
 font = pygame.font.SysFont("arial", 32)
 
-escape_button = buttons.KeyButton(
-    pygame.K_e,
-    lambda : print("ESCAPING"),
+def get_text_button(text, key: int,  f: Callable, pos:tuple, color1: tuple = (255, 255, 255), color2: tuple = (255, 0, 0)):
+    return buttons.KeyButton(
+        key,
+        f,
 
-    base=buttons.ButtonDescriptor(
-        display=font.render("ESCAPE", True, (255, 255, 255)),
-        pos=(300, 200)
-    ),
+        base=buttons.ButtonDescriptor(
+            display=font.render(text, True, color1),
+            pos=pos
+        ),
 
-    end=buttons.ButtonDescriptor(
-        display=font.render("ESCAPE", True, (255, 0, 0)),
-        pos=(300, 200)
+        end=buttons.ButtonDescriptor(
+            display=font.render(text, True, color2),
+            pos=pos
+        )
     )
-)
-buttons.deactivate(escape_button)
 
 params = {}
 
@@ -146,8 +146,16 @@ def main():
             fire_transition(window, start, end)
             params["transition"] = False
             params["mouse_rotation"] = False
-            buttons.activate(escape_button)
-            pygame.mouse.set_visible(True)
+            attack_button = get_text_button("(A)ATTACK", pygame.K_a, lambda : print("ATTACK"), (480, 480))
+            
+            test_button = get_text_button("(A)ITEM1", pygame.K_a, lambda : print("ITEM1"), (480, 480))
+            test2_button = get_text_button("(B)ITEM2", pygame.K_b, lambda : print("ITEM2"), (480, 515))
+            exit_button = get_text_button("(X)EXIT", pygame.K_x, None, (480, 550))
+            buttons.deactivate([test_button, test2_button, exit_button])
+
+            items_button = get_text_button("(Y)ITEMS", pygame.K_y, buttons.tunnel(buttons.CURRENT_BUTTONS, [test_button, test2_button], exit_button), (480, 515))
+
+            skills_button = get_text_button("(X)SKILLS", pygame.K_x, lambda : print("SKILLS"), (480, 550))
         
         camera.draw_world(window, fight_scene + [ennemy_light, player_light], max_distance=L*6)
         for b in buttons.CURRENT_BUTTONS:
