@@ -2,6 +2,7 @@ import pygame
 pygame.init()
 
 from math import pi
+from copy import copy
 
 from map import Map
 from src.render.utils import *
@@ -13,6 +14,10 @@ import src.render.frames as frames
 from src.render.transitions import fire_transition
 
 import src.interface.buttons as buttons
+from src.interface.bars import get_bar
+
+from src.render.utils import Ennemy as EnnemyRender
+from src.game.entities import Ennemy
 
 window = pygame.display.set_mode((780, 780)) # (0, 0), pygame.FULLSCREEN
 
@@ -75,12 +80,14 @@ pygame.font.init()
 torches = [] #get_torches(map)
 sign = Sign.from_text("Ceci EST un TEST puissant", Point(1, 1, 3), support=True)
 test_obj = Object.from_file("assets/CUBE.obj", Point(2.5, 2.5, 2.5),texture=CUBE_TEXTURES)
-ennemy = Ennemy(Point(1,0,4), BAT_TEXTURE, camera)
-world = get_cubes(map) + torches + [sign] + [ennemy] # [test_obj]
+ennemy_render = EnnemyRender(Point(1,0,4), BAT_TEXTURE, camera)
+world = get_cubes(map) + torches + [sign] + [ennemy_render] # [test_obj]
 
-fight_monster = Ennemy(Point(L*1, -2, L*3), MONSTER_TEXTURE, camera)
+fight_monster = EnnemyRender(Point(L*1, -2, L*3), MONSTER_TEXTURE, camera)
 fight_monster.tick()
 fight_monster.face.transformation(lambda x: x * 4)
+fight_monster_entity = Ennemy('Vilain Test', 100, 1, 0.1, fight_monster)
+
 fight_room = Cuboid(
     L*4, L*4, L*4, Point(0, 0, 0), 
     texture=[WALL_TEXTURE, WALL_TEXTURE, WALL_TEXTURE, WALL_TEXTURE, CEILING_TEXTURE, FLOOR_TEXTURE],
@@ -123,10 +130,10 @@ def main():
             anim.tick(f)
 
         if f % 1 == 0:
-            for torch in torches + [ennemy]: # + [sign]
+            for torch in torches + [ennemy_render]: # + [sign]
                 torch.tick()
             
-        if ((camera.origine.x - ennemy.pos.x)**2 + (camera.origine.y - ennemy.pos.y)**2 + (camera.origine.z - ennemy.pos.z)**2)**0.5 <= COLLISION_RADIUS:
+        if ((camera.origine.x - ennemy_render.pos.x)**2 + (camera.origine.y - ennemy_render.pos.y)**2 + (camera.origine.z - ennemy_render.pos.z)**2)**0.5 <= COLLISION_RADIUS:
             params["move"] = False
             params["pause"] = True
             params["transition"] = True
@@ -146,7 +153,7 @@ def main():
             fire_transition(window, start, end)
             params["transition"] = False
             params["mouse_rotation"] = False
-            attack_button = get_text_button("(A)ATTACK", pygame.K_a, lambda : print("ATTACK"), (480, 480))
+            attack_button = get_text_button("(A)ATTACK", pygame.K_a, lambda : fight_monster_entity.damage(10), (480, 480))
             
             test_button = get_text_button("(A)ITEM1", pygame.K_a, lambda : print("ITEM1"), (480, 480))
             test2_button = get_text_button("(B)ITEM2", pygame.K_b, lambda : print("ITEM2"), (480, 515))
@@ -156,8 +163,12 @@ def main():
             items_button = get_text_button("(Y)ITEMS", pygame.K_y, buttons.tunnel(buttons.CURRENT_BUTTONS, [test_button, test2_button], exit_button), (480, 515))
 
             skills_button = get_text_button("(X)SKILLS", pygame.K_x, lambda : print("SKILLS"), (480, 550))
+            
+            params["ennemy_health_bar"] = Square(4, fight_monster.pos + Point(5, 10, 0), texture=fight_monster.face.texture)
         
-        camera.draw_world(window, fight_scene + [ennemy_light, player_light], max_distance=L*6)
+        params["ennemy_health_bar"].texture = get_bar(fight_monster_entity.life, fight_monster_entity.max_life, (255, 0, 0), (0, 255, 0))
+        camera.draw_world(window, fight_scene + [ennemy_light, player_light, params["ennemy_health_bar"]], max_distance=L*6)
+
         for b in buttons.CURRENT_BUTTONS:
             b.display(window)
     f += 1
