@@ -392,14 +392,14 @@ class Cube(Object):
         ]
 
         super().__init__(vertices, edges, faces, pos, color, texture, n_repetition)
-        
-class Square(Object):
-    def __init__(self, l, pos, color:pygame.Color = None, texture: pygame.Surface = None, rotation_x:float = 0, rotation_y:float = 0, rotation_z:float = 0):
+
+class Rectangle(Object):
+    def __init__(self, l, L, pos, color:pygame.Color = None, texture: pygame.Surface = None, rotation_x:float = 0, rotation_y:float = 0, rotation_z:float = 0):
         vertices = [
             Point(0, 0, 0, 0, 0),
             Point(0, l, 0, 0, 1),
-            Point(l, l, 0, 1, 1),
-            Point(l, 0, 0, 1, 0),
+            Point(L, l, 0, 1, 1),
+            Point(L, 0, 0, 1, 0),
         ]
 
         # Appliquer les rotations
@@ -436,6 +436,10 @@ class Square(Object):
             rotated.append(Point(x_new, y, z, v.u, v.v))
         
         return rotated
+
+class Square(Rectangle):
+    def __init__(self, l, pos, color:pygame.Color = None, texture: pygame.Surface = None, rotation_x:float = 0, rotation_y:float = 0, rotation_z:float = 0):
+        super().__init__(l, l, pos, color, texture, rotation_x, rotation_y, rotation_z)
     
 class Element:
     """Ensemble d'objets avec possibilité d'appeler une fonction à chaque frame"""

@@ -164,7 +164,7 @@ def main():
 
             skills_button = get_text_button("(X)SKILLS", pygame.K_x, lambda : print("SKILLS"), (480, 550))
             
-            params["ennemy_health_bar"] = Square(4, fight_monster.pos + Point(5, 10, 0), texture=fight_monster.face.texture)
+            params["ennemy_health_bar"] = Rectangle(3, 10, fight_monster.pos + Point(5, 10, 0), texture=fight_monster.face.texture)
         
         params["ennemy_health_bar"].texture = get_bar(fight_monster_entity.life, fight_monster_entity.max_life, (255, 0, 0), (0, 255, 0))
         camera.draw_world(window, fight_scene + [ennemy_light, player_light, params["ennemy_health_bar"]], max_distance=L*6)

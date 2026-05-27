@@ -11,5 +11,5 @@
 - [X] Ajouter répétition texture n fois
 - [ ] Ajouter fonction scale pour `Object`
 - [ ] Créer fonction pour s'orienter vers une direction
-- [ ] Passer Square vers Rectangle
+- [X] Passer Square vers Rectangle
 - [ ] éviter chargement pixels3d et alpha_pixels à chaque frame
