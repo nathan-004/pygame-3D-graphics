@@ -378,6 +378,7 @@ class Camera:
         tex_rgb = pygame.surfarray.pixels3d(texture)
         tex_alpha = pygame.surfarray.pixels_alpha(texture)
         
+        
         self.textures[texture] = (tex_rgb, tex_alpha)
         return self.textures[texture]
 
