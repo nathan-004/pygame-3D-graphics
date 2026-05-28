@@ -111,25 +111,28 @@ def draw_triangle_numba(
                     xw = camera_position[0] + dir_x * z
                     yw = camera_position[1] + dir_y * z
                     zw = camera_position[2] + dir_z * z
+                    
+                    if lights is not None:
+                        for light in lights:
+                            lx, ly, lz = light[0]
+                            dx = lx - xw
+                            dy = ly - yw
+                            dz = lz - zw
 
-                    for light in lights:
-                        lx, ly, lz = light[0]
-                        dx = lx - xw
-                        dy = ly - yw
-                        dz = lz - zw
+                            radius = light[3]
 
-                        radius = light[3]
+                            dist2 = dx*dx + dy*dy + dz*dz
+                            if dist2 < radius * radius:
+                                intensity = min(1, (1 / (1 + K * dist2)) * light[1])
+                                
+                                r += color[0] * intensity * light[2][0]
+                                g += color[1] * intensity * light[2][1]
+                                b += color[2] * intensity * light[2][2]
 
-                        dist2 = dx*dx + dy*dy + dz*dz
-                        if dist2 < radius * radius:
-                            intensity = min(1, (1 / (1 + K * dist2)) * light[1])
-                            
-                            r += color[0] * intensity * light[2][0]
-                            g += color[1] * intensity * light[2][1]
-                            b += color[2] * intensity * light[2][2]
-
-                    color = (min(r, 255), min(g, 255), min(b, 255))
-
+                        color = (min(r, 255), min(g, 255), min(b, 255))
+                    else:
+                        color = (color[0], color[1], color[2])
+                    
                     for yy in range(y, min(y+N, height)):
                         for xx in range(x, min(x+N, width)):
                             zbuffer[yy, xx] = z
@@ -268,7 +271,7 @@ class Camera:
                             originals.append((screen_p.x_original, screen_p.y_original))
                         if object.texture:
                             tex_data = self.get_current_texture(object.texture, idx)
-                            self.draw_triangle(pixels, tex_data, surface.get_size(), *projected, object.N, originals)
+                            self.draw_triangle(pixels, tex_data, surface.get_size(), *projected, object.N, originals, object.light)
                         else:
                             pygame.gfxdraw.filled_polygon(surface, projected, object.fill_color)
         finally:
@@ -277,7 +280,7 @@ class Camera:
                 for key in list(self.textures.keys()):
                     del self.textures[key]
 
-    def draw_triangle(self, pixels: pygame.surfarray.pixels3d, tex_data: tuple, surface_size: tuple, v1: Point, v2: Point, v3: Point, n_tex:int, originals: list = None):
+    def draw_triangle(self, pixels: pygame.surfarray.pixels3d, tex_data: tuple, surface_size: tuple, v1: Point, v2: Point, v3: Point, n_tex:int, originals: list = None, display_light: bool = True ):
         if originals is None:
             originals = [(0, 0), (0, 0), (0, 0)]
         
@@ -299,16 +302,19 @@ class Camera:
             x2*(y3 - y1) +
             x3*(y1 - y2)
         ) / 2
-
-        lights = [
-            (
-                (float(light.pos.x), float(light.pos.y), float(light.pos.z)),
-                float(light.intensity),
-                (float(light.color[0]), float(light.color[1]), float(light.color[2])),
-                float(light.radius)
-            )
-            for light in self.lights
-        ]
+        
+        if display_light:
+            lights = [
+                (
+                    (float(light.pos.x), float(light.pos.y), float(light.pos.z)),
+                    float(light.intensity),
+                    (float(light.color[0]), float(light.color[1]), float(light.color[2])),
+                    float(light.radius)
+                )
+                for light in self.lights
+            ]
+        else:
+            lights = None
 
         N = min(max(int((area / self.target_pixel)**0.5), self.N_MIN), self.N_MAX)
 

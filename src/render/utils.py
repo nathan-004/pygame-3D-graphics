@@ -247,7 +247,7 @@ def rotate_point(p: Point, rotation_matrix: list) -> Point:
     )
 
 class Object:
-    def __init__(self, vertices:list, edges:list, faces:list, pos: Point, fill_color: pygame.Color = None, texture: pygame.Surface = None, n_repetition:int = 1):
+    def __init__(self, vertices:list, edges:list, faces:list, pos: Point, fill_color: pygame.Color = None, texture: pygame.Surface = None, n_repetition:int = 1, light: bool = True):
         if type(fill_color) is list:
             assert len(fill_color) == len(faces), "Nombre de couleurs différent du nombre de faces"
         elif type(texture) is list:
@@ -260,6 +260,7 @@ class Object:
         self.fill_color = fill_color
         self.texture = texture
         self.N = n_repetition
+        self.light = light
 
     @property
     def points(self):
