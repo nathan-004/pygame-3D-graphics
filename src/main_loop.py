@@ -84,6 +84,8 @@ ennemy_render = EnnemyRender(Point(1,0,4), BAT_TEXTURE, camera)
 world = get_cubes(map) + torches + [sign] + [ennemy_render] # [test_obj]
 
 fight_monster = EnnemyRender(Point(L*1, -2, L*3), MONSTER_TEXTURE, camera)
+ennemy_test = Object.from_file("assets/TEST.obj", Point(L*1, -2, L*3), texture=TEST_TEXTURE)
+print(len(ennemy_test.faces))
 fight_monster.tick()
 fight_monster.face.transformation(lambda x: x * 4)
 fight_monster_entity = Ennemy('Vilain Test', 100, 1, 0.1, fight_monster)

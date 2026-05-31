@@ -230,7 +230,7 @@ class Camera:
     def draw_faces(self, surface: pygame.Surface, object:Object, near: float):
         if object.fill_color is None and object.texture is None:
             return
-        
+
         try:
             pixels = pygame.surfarray.pixels3d(surface)
             for idx, points in enumerate(object.faces):
@@ -272,10 +272,11 @@ class Camera:
                         else:
                             pygame.gfxdraw.filled_polygon(surface, projected, object.fill_color)
         finally:
-            del pixels
             if object.texture:
                 for key in list(self.textures.keys()):
                     del self.textures[key]
+
+            pixels = None
 
     def draw_triangle(self, pixels: pygame.surfarray.pixels3d, tex_data: tuple, surface_size: tuple, v1: Point, v2: Point, v3: Point, n_tex:int, originals: list = None):
         if originals is None:
@@ -334,6 +335,8 @@ class Camera:
             lights,
             forward, right, up
         )
+
+        del pixels
     
     def screen(self, p: Point2D, surface: pygame.Surface) -> Point2D:
         w, h = surface.get_size()
