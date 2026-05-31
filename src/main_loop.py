@@ -99,6 +99,12 @@ fight_scene = [fight_room] + fight_monster.objects
 
 font = pygame.font.SysFont("arial", 32)
 
+new = MONSTER_TEXTURE.convert_alpha()
+tex_rgb = pygame.surfarray.pixels3d(new)
+new_img = pygame.pixelcopy.make_surface(tex_rgb)
+pygame.image.save(new_img, "test_ monster.png")
+
+
 def get_text_button(text, key: int,  f: Callable, pos:tuple, color1: tuple = (255, 255, 255), color2: tuple = (255, 0, 0)):
     return buttons.KeyButton(
         key,
@@ -143,8 +149,8 @@ def main():
             params["map"] = False
     else:
         camera.origine = Point(L, 1, L)
-        player_light = Light(camera.origine, 1, 200, (1, 0.5, 0))
-        ennemy_light = Light(Point(L*3, 1, L*3), 5, 200, (1, 0, 0))
+        player_light = Light(camera.origine, 3, 200, (1, 0.5, 0))
+        ennemy_light = Light(Point(L*3, 1, L*3), 10, 200, (1, 0, 0))
 
         if params["transition"]:
             start = params["start_frame"]
@@ -167,8 +173,9 @@ def main():
             skills_button = get_text_button("(X)SKILLS", pygame.K_x, lambda : print("SKILLS"), (480, 550))
             
             params["ennemy_health_bar"] = Rectangle(3, 10, fight_monster.pos + Point(5, 10, 0), texture=fight_monster.face.texture)
+            params["ennemy_health_bar"].light = False
         
-        params["ennemy_health_bar"].texture = get_bar(fight_monster_entity.life, fight_monster_entity.max_life, (255, 0, 0), (0, 255, 0))
+        params["ennemy_health_bar"].texture = get_bar(fight_monster_entity.life, fight_monster_entity.max_life, (255, 0, 0), (58, 235, 52))
         camera.draw_world(window, fight_scene + [ennemy_light, player_light, params["ennemy_health_bar"]], max_distance=L*6)
 
         for b in buttons.CURRENT_BUTTONS:
