@@ -2,7 +2,7 @@ from math import cos, sin, pi, atan2
 import random
 import pygame
 
-from typing import NamedTuple, Callable
+from typing import NamedTuple, Callable, Optional
 from copy import deepcopy
 
 from src.render.text import correct_text_placement
@@ -266,6 +266,10 @@ class Object:
     def points(self):
         return [Point(point.x + self.pos.x, point.y + self.pos.y, point.z + self.pos.z, point.u, point.v) for point in self._vertices]
     
+    @property
+    def height(self):
+        return max([p.y for p in self.points])
+    
     def transformation(self, f: Callable):
         for idx, p in enumerate(self._vertices):
             self._vertices[idx] = f(p)
@@ -509,19 +513,18 @@ class Sign(Element):
             self.support.transformation(lambda x: rotate_point(x - center_support, get_y_rotation_matrix(0.1)) + center_support)
 
 class Ennemy(Element):
-    def __init__(self, pos: Point, texture: pygame.Surface | list, camera):
-        self.s = 3
-        self.face = Square(self.s, pos, texture=texture)
-        self._initial_vertices = deepcopy(self.face._vertices)
+    def __init__(self, object: Object, camera):
+        self.object = object
+        self._initial_vertices = deepcopy(self.object._vertices)
 
-        self.pos = pos
+        self.pos = object.pos
 
         self.speed = 0.05
         self.rotation_frames = 1
         self.current_angle = pi
 
         self.camera = camera
-        super().__init__([self.face])
+        super().__init__([self.object])
 
     def tick(self):
         dx = self.pos.x - self.camera.origine.x
@@ -533,10 +536,10 @@ class Ennemy(Element):
         angle_diff = normalize_angle(angle_to_camera - self.current_angle)
         self.current_angle = normalize_angle(self.current_angle + angle_diff / self.rotation_frames)
 
-        self.face._vertices = deepcopy(self._initial_vertices)
+        self.object._vertices = deepcopy(self._initial_vertices)
 
-        center = Point(self.s * 0.5, 0, 0)
-        self.face.transformation(
+        center = Point(self.object.height * 0.5, 0, 0)
+        self.object.transformation(
             lambda x: rotate_point(x - center, get_y_rotation_matrix(-self.current_angle)) + center
         )
 
@@ -556,4 +559,4 @@ class Ennemy(Element):
             self.pos.z + dz * self.speed
         )
 
-        self.face.pos = self.pos
+        self.object.pos = self.pos

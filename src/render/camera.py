@@ -161,7 +161,7 @@ class Camera:
         self.size = size
         self.d = 1
         self.N_MIN = 1
-        self.N_MAX = 3
+        self.N_MAX = 5
         self.target_pixel = 3000
         
         self.textures = {}
@@ -200,7 +200,7 @@ class Camera:
         self.lights = [obj for obj in objects if isinstance(obj, Light)]
         objects = [obj for obj in objects if not isinstance(obj, Light)]
         camera_plane = Plan.plane_from_point(self.direction, self.origine)
-        objects = sorted(objects, key= lambda x: camera_plane.distance(x.pos), reverse=False)
+        objects = sorted(objects, key= lambda x: camera_plane.distance(x.pos))
 
         for obj in objects:
             self.draw(surface, obj)
@@ -235,6 +235,7 @@ class Camera:
             return
 
         try:
+            n_faces = 0
             pixels = pygame.surfarray.pixels3d(surface)
             for idx, points in enumerate(object.faces):
                 if type(object.texture) is list:
@@ -245,6 +246,7 @@ class Camera:
 
                 if all(p.z < near for p in cam_points):
                     continue
+                n_faces += 1
 
                 clipped = []
 
@@ -275,6 +277,8 @@ class Camera:
                         else:
                             pygame.gfxdraw.filled_polygon(surface, projected, object.fill_color)
         finally:
+            if type(object) is Object:
+                print(n_faces)
             if object.texture:
                 for key in list(self.textures.keys()):
                     del self.textures[key]

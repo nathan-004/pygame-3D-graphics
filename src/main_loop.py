@@ -79,15 +79,15 @@ pygame.font.init()
 
 torches = [] #get_torches(map)
 sign = Sign.from_text("Ceci EST un TEST puissant", Point(1, 1, 3), support=True)
-test_obj = Object.from_file("assets/CUBE.obj", Point(2.5, 2.5, 2.5),texture=CUBE_TEXTURES)
-ennemy_render = EnnemyRender(Point(1,0,4), BAT_TEXTURE, camera)
+ennemy_render = EnnemyRender(Square(3, Point(1,0,4), texture=BAT_TEXTURE), camera)
 world = get_cubes(map) + torches + [sign] + [ennemy_render] # [test_obj]
 
-fight_monster = EnnemyRender(Point(L*1, -2, L*3), MONSTER_TEXTURE, camera)
-ennemy_test = Object.from_file("assets/TEST.obj", Point(L*1, -2, L*3), texture=TEST_TEXTURE)
-print(len(ennemy_test.faces))
+ennemy_test = Object.from_file("assets/TEST.obj", Point(L*1, 0, L*3), texture=TEST_TEXTURE)
+print(len(ennemy_test._vertices), len(ennemy_test.faces))
+ennemy_test.light = False 
+fight_monster = EnnemyRender(ennemy_test, camera)
 fight_monster.tick()
-fight_monster.face.transformation(lambda x: x * 4)
+fight_monster.object.transformation(lambda x: x * 0.5)
 fight_monster_entity = Ennemy('Vilain Test', 100, 1, 0.1, fight_monster)
 
 fight_room = Cuboid(
@@ -150,7 +150,7 @@ def main():
     else:
         camera.origine = Point(L, 1, L)
         player_light = Light(camera.origine, 3, 200, (1, 0.5, 0))
-        ennemy_light = Light(Point(L*3, 1, L*3), 10, 200, (1, 0, 0))
+        ennemy_light = Light(Point(L*3, 1, L*3), 10, 200, (1, 1, 1))
 
         if params["transition"]:
             start = params["start_frame"]
@@ -172,7 +172,7 @@ def main():
 
             skills_button = get_text_button("(X)SKILLS", pygame.K_x, lambda : print("SKILLS"), (480, 550))
             
-            params["ennemy_health_bar"] = Rectangle(3, 10, fight_monster.pos + Point(5, 10, 0), texture=fight_monster.face.texture)
+            params["ennemy_health_bar"] = Rectangle(3, 10, fight_monster.pos + Point(5, 10, 0), texture=fight_monster.object.texture)
             params["ennemy_health_bar"].light = False
         
         params["ennemy_health_bar"].texture = get_bar(fight_monster_entity.life, fight_monster_entity.max_life, (255, 0, 0), (58, 235, 52))
