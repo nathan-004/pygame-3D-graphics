@@ -104,7 +104,6 @@ tex_rgb = pygame.surfarray.pixels3d(new)
 new_img = pygame.pixelcopy.make_surface(tex_rgb)
 pygame.image.save(new_img, "test_ monster.png")
 
-
 def get_text_button(text, key: int,  f: Callable, pos:tuple, color1: tuple = (255, 255, 255), color2: tuple = (255, 0, 0)):
     return buttons.KeyButton(
         key,

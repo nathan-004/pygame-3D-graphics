@@ -3,9 +3,14 @@ from numba import njit
 import pygame
 from math import atan
 
+import time
+import logging
+
 from src.constants import L, K
 from src.render.utils import *
 from src.render.frames import FrameObject
+
+logger = logging.getLogger(__name__)
 
 @njit(fastmath = True)
 def draw_triangle_numba(
@@ -202,8 +207,10 @@ class Camera:
         camera_plane = Plan.plane_from_point(self.direction, self.origine)
         objects = sorted(objects, key= lambda x: camera_plane.distance(x.pos))
 
+        start_draw_world = time.perf_counter()
         for obj in objects:
             self.draw(surface, obj)
+        logger.debug(f"Affichées {len(objects)} objets en {time.perf_counter() - start_draw_world}")
 
     def draw(self, surface: pygame.Surface, object:Object):
         NEAR = 0.5
@@ -237,7 +244,13 @@ class Camera:
         try:
             n_faces = 0
             pixels = pygame.surfarray.pixels3d(surface)
+            
+            clipping_total_time = 0
+            display_total_time = 0
+            draw_triangle_total_time = 0
+
             for idx, points in enumerate(object.faces):
+                start_clipping = time.perf_counter()
                 if type(object.texture) is list:
                     if object.texture[idx] is None:
                         continue
@@ -260,7 +273,9 @@ class Camera:
                     elif p1.z < near and p2.z >= near:
                         clipped.append(intersect_near(p1, p2, near))
                         clipped.append(p2)
+                clipping_total_time += time.perf_counter() - start_clipping
 
+                start_display = time.perf_counter()
                 if len(clipped) >= 3:
                     triangles = face_to_triangles(clipped)
                     for triangle in triangles:
@@ -273,17 +288,20 @@ class Camera:
                             originals.append((screen_p.x_original, screen_p.y_original))
                         if object.texture:
                             tex_data = self.get_current_texture(object.texture, idx)
+                            start_draw_triangle = time.perf_counter()
                             self.draw_triangle(pixels, tex_data, surface.get_size(), *projected, object.N, originals, object.light)
+                            draw_triangle_total_time += time.perf_counter() - start_draw_triangle
                         else:
                             pygame.gfxdraw.filled_polygon(surface, projected, object.fill_color)
+                display_total_time += time.perf_counter() - start_display
         finally:
-            if type(object) is Object:
-                print(n_faces)
             if object.texture:
                 for key in list(self.textures.keys()):
                     del self.textures[key]
 
             pixels = None
+
+            logger.debug(f"DISPLAY {object} | Clipping: {clipping_total_time:.4f}s | Display: {display_total_time:.4f}s | draw_triangle: {draw_triangle_total_time:.4f}s")
 
     def draw_triangle(self, pixels: pygame.surfarray.pixels3d, tex_data: tuple, surface_size: tuple, v1: Point, v2: Point, v3: Point, n_tex:int, originals: list = None, display_light: bool = True ):
         if originals is None:

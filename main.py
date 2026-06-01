@@ -3,6 +3,8 @@ from src.render.camera import draw_triangle_numba
 
 import numpy as np
 
+import logging
+
 def warmup_numba():
     dummy_pixels = np.zeros((10, 10, 3), dtype=np.uint8)
     dummy_tex = np.zeros((4, 4, 3), dtype=np.uint8)
@@ -33,5 +35,13 @@ def warmup_numba():
     print("Numba compilation terminée.")
 
 if __name__ == "__main__":
+    logger = logging.getLogger(__name__)
+    logging.basicConfig(
+        level=logging.DEBUG,
+        format='%(name)s - %(levelname)s - %(message)s'
+    ) # https://docs.python.org/3/library/logging.html#levels
+
+    logging.getLogger('numba').setLevel(logging.WARNING)
+
     warmup_numba()
     main()
