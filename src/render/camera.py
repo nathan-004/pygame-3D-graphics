@@ -248,6 +248,8 @@ class Camera:
             clipping_total_time = 0
             display_total_time = 0
             draw_triangle_total_time = 0
+            proj_perspective_total_time = 0
+            texture_total_time = 0
 
             for idx, points in enumerate(object.faces):
                 start_clipping = time.perf_counter()
@@ -281,13 +283,20 @@ class Camera:
                     for triangle in triangles:
                         projected = []
                         originals = []
+                        start_proj_perspective = time.perf_counter()
+                        
                         for v in triangle:
                             p2d = projection_perspective(v, self.d)
                             screen_p = self.screen(p2d, surface)
                             projected.append(Point(screen_p.x, screen_p.y, v.z, v.u, v.v))
                             originals.append((screen_p.x_original, screen_p.y_original))
+                        
+                        proj_perspective_total_time += time.perf_counter() - start_proj_perspective
+                        
                         if object.texture:
+                            start_texture = time.perf_counter()
                             tex_data = self.get_current_texture(object.texture, idx)
+                            texture_total_time += time.perf_counter() - start_texture
                             start_draw_triangle = time.perf_counter()
                             self.draw_triangle(pixels, tex_data, surface.get_size(), *projected, object.N, originals, object.light)
                             draw_triangle_total_time += time.perf_counter() - start_draw_triangle
@@ -301,7 +310,7 @@ class Camera:
 
             pixels = None
 
-            logger.debug(f"DISPLAY {object} | Clipping: {clipping_total_time:.4f}s | Display: {display_total_time:.4f}s | draw_triangle: {draw_triangle_total_time:.4f}s")
+            logger.debug(f"DISPLAY {object} | Clipping: {clipping_total_time:.4f}s | Display: {display_total_time:.4f}s | draw_triangle: {draw_triangle_total_time:.4f}s | Proj perspective: {proj_perspective_total_time:.4f}s | Texture: {texture_total_time:.4f}s")
 
     def draw_triangle(self, pixels: pygame.surfarray.pixels3d, tex_data: tuple, surface_size: tuple, v1: Point, v2: Point, v3: Point, n_tex:int, originals: list = None, display_light: bool = True ):
         if originals is None:
