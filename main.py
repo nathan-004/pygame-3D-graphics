@@ -37,7 +37,7 @@ def warmup_numba():
 if __name__ == "__main__":
     logger = logging.getLogger(__name__)
     logging.basicConfig(
-        level=logging.DEBUG,
+        level=logging.WARNING,
         format='%(name)s - %(levelname)s - %(message)s'
     ) # https://docs.python.org/3/library/logging.html#levels
 

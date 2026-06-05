@@ -169,7 +169,9 @@ class Camera:
         self.N_MAX = 5
         self.target_pixel = 3000
         
-        self.textures = {}
+        self.textures = {}  # {texture_key: (tex_rgb, tex_alpha)}
+        self.texture_metadata = {}  # {texture_key: last_frame_used}
+        self.frame_count = 0
 
         self.zbuffer = None
 
@@ -211,6 +213,9 @@ class Camera:
         for obj in objects:
             self.draw(surface, obj)
         logger.debug(f"Affichées {len(objects)} objets en {time.perf_counter() - start_draw_world}")
+        
+        self._cleanup_old_textures()
+        self.frame_count += 1
 
     def draw(self, surface: pygame.Surface, object:Object):
         NEAR = 0.5
@@ -304,10 +309,6 @@ class Camera:
                             pygame.gfxdraw.filled_polygon(surface, projected, object.fill_color)
                 display_total_time += time.perf_counter() - start_display
         finally:
-            if object.texture:
-                for key in list(self.textures.keys()):
-                    del self.textures[key]
-
             pixels = None
 
             logger.debug(f"DISPLAY {object} | Clipping: {clipping_total_time:.4f}s | Display: {display_total_time:.4f}s | draw_triangle: {draw_triangle_total_time:.4f}s | Proj perspective: {proj_perspective_total_time:.4f}s | Texture: {texture_total_time:.4f}s")
@@ -404,17 +405,33 @@ class Camera:
             texture = texture[idx]
         elif type(texture) is FrameObject:
             texture = texture.texture
-        if texture in self.textures:
-            return self.textures[texture]
+        
+        texture_id = id(texture)
+        self.texture_metadata[texture_id] = self.frame_count
+        
+        if texture_id in self.textures:
+            return self.textures[texture_id]
         
         # Récupère les pixels RGB et le canal alpha
-        texture = texture.convert_alpha()
-        tex_rgb = pygame.surfarray.pixels3d(texture)
-        tex_alpha = pygame.surfarray.pixels_alpha(texture)
+        texture_converted = texture.convert_alpha()
+        tex_rgb = pygame.surfarray.pixels3d(texture_converted)
+        tex_alpha = pygame.surfarray.pixels_alpha(texture_converted)
         
+        self.textures[texture_id] = (tex_rgb, tex_alpha)
+        return self.textures[texture_id]
+
+    def _cleanup_old_textures(self):
+        """Supprimer les textures non utilisées depuis plus d'1 frame"""
+        textures_to_remove = []
+        for texture_id, last_frame in list(self.texture_metadata.items()):
+            if last_frame < self.frame_count:
+                textures_to_remove.append(texture_id)
         
-        self.textures[texture] = (tex_rgb, tex_alpha)
-        return self.textures[texture]
+        for texture_id in textures_to_remove:
+            if texture_id in self.textures:
+                del self.textures[texture_id]
+            if texture_id in self.texture_metadata:
+                del self.texture_metadata[texture_id]
 
     @property
     def fov_y(self):
