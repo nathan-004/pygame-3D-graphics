@@ -87,7 +87,7 @@ print(len(ennemy_test._vertices), len(ennemy_test.faces))
 ennemy_test.light = False 
 fight_monster = EnnemyRender(ennemy_test, camera)
 fight_monster.tick()
-fight_monster.object.transformation(lambda x: x * 0.5)
+fight_monster.object.transformation(lambda x: x * 1)
 fight_monster_entity = Ennemy('Vilain Test', 100, 1, 0.1, fight_monster)
 
 fight_room = Cuboid(

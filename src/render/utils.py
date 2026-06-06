@@ -1,6 +1,7 @@
 from math import cos, sin, pi, atan2
 import random
 import pygame
+from numba import njit
 
 from typing import NamedTuple, Callable, Optional
 from copy import deepcopy
@@ -227,16 +228,25 @@ def normalize(v:Vector) -> Vector:
 def projection_perspective(p:Point, d:float) -> Point2D:
     return Point2D(p.x * (d / p.z), p.y * (d / p.z))
 
-def intersect_near(p1: Point, p2: Point, near:float):
-    t = (near - p1.z) / (p2.z - p1.z)
+@njit(fastmath = True)
+def fast_intersect_near(p1, p2, near:float):
+    t = (near - p1[2]) / (p2[2] - p1[2])
 
-    x = p1.x + t * (p2.x - p1.x)
-    y = p1.y + t * (p2.y - p1.y)
+    x = p1[0] + t * (p2[0] - p1[0])
+    y = p1[1] + t * (p2[1] - p1[1])
     z = near
-    u = p1.u + t * (p2.u - p1.u)
-    v = p1.v + t * (p2.v - p1.v)
+    u = p1[3] + t * (p2[3] - p1[3])
+    v = p1[4] + t * (p2[4] - p1[4])
 
-    return Point(x, y, z, u, v)
+    return (x, y, z, u, v)
+
+def intersect_near(p1: Point, p2: Point, near:float):
+    inp_p1 = tuple(p1)
+    inp_p2 = tuple(p2)
+
+    res = fast_intersect_near(inp_p1, inp_p2, near)
+
+    return Point(*res)
 
 def rotate_point(p: Point, rotation_matrix: list) -> Point:
     return Point(

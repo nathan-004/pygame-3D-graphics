@@ -178,6 +178,9 @@ class Camera:
         self.lights = []
         self.latest_draw = []
 
+        self._last_direction = None
+        self._cached_view_matrix = self.view_matrix
+
     @property
     def direction(self):
         return normalize(Vector(
@@ -187,18 +190,28 @@ class Camera:
         ))
     
     @property
-    def view_matrix(self): 
-        forward = normalize(self.direction)
+    def view_matrix(self):
+        dir = self.direction
+
+        if self._last_direction is not None and dir == self._last_direction:
+            return self._cached_view_matrix
+
+        forward = normalize(dir)
         world_up = Vector(0,1,0)
 
         right = normalize(cross(world_up, forward))
         up = cross(forward, right)
 
-        return [
+        res = [
             [right.x, right.y, right.z],
             [up.x,    up.y,    up.z],
             [forward.x, forward.y, forward.z]
         ]
+
+        self._cached_view_matrix = res
+        self._last_direction = dir
+
+        return res
 
     def draw_world(self, surface:pygame.Surface, objects: list[Object], max_distance:float = L*3):
         self.latest_draw = objects
@@ -250,24 +263,32 @@ class Camera:
             n_faces = 0
             pixels = pygame.surfarray.pixels3d(surface)
             
-            clipping_total_time = 0
-            display_total_time = 0
+            world_to_camera_time = 0
+            clipping_check_time = 0
+            actual_clipping_time = 0
+            triangulation_time = 0
+            projection_time = 0
+            texture_fetch_time = 0
             draw_triangle_total_time = 0
-            proj_perspective_total_time = 0
-            texture_total_time = 0
 
             for idx, points in enumerate(object.faces):
-                start_clipping = time.perf_counter()
                 if type(object.texture) is list:
                     if object.texture[idx] is None:
                         continue
                     
-                cam_points = [self.world_to_camera(object.points[i]) for i in points]
+                start_w2c = time.perf_counter()
+                obj_points = object.points
+                cam_points = [self.world_to_camera(obj_points[i]) for i in points]
+                world_to_camera_time += time.perf_counter() - start_w2c
 
+                start_check = time.perf_counter()
                 if all(p.z < near for p in cam_points):
+                    clipping_check_time += time.perf_counter() - start_check
                     continue
+                clipping_check_time += time.perf_counter() - start_check
                 n_faces += 1
 
+                start_clipping = time.perf_counter()
                 clipped = []
 
                 for p1, p2 in zip(cam_points, cam_points[1:] + cam_points[:1]):
@@ -280,38 +301,46 @@ class Camera:
                     elif p1.z < near and p2.z >= near:
                         clipped.append(intersect_near(p1, p2, near))
                         clipped.append(p2)
-                clipping_total_time += time.perf_counter() - start_clipping
+                actual_clipping_time += time.perf_counter() - start_clipping
 
-                start_display = time.perf_counter()
                 if len(clipped) >= 3:
+                    start_tri = time.perf_counter()
                     triangles = face_to_triangles(clipped)
+                    triangulation_time += time.perf_counter() - start_tri
+
                     for triangle in triangles:
+                        start_proj = time.perf_counter()
                         projected = []
                         originals = []
-                        start_proj_perspective = time.perf_counter()
                         
                         for v in triangle:
                             p2d = projection_perspective(v, self.d)
                             screen_p = self.screen(p2d, surface)
                             projected.append(Point(screen_p.x, screen_p.y, v.z, v.u, v.v))
                             originals.append((screen_p.x_original, screen_p.y_original))
-                        
-                        proj_perspective_total_time += time.perf_counter() - start_proj_perspective
+                        projection_time += time.perf_counter() - start_proj
                         
                         if object.texture:
-                            start_texture = time.perf_counter()
+                            start_tex = time.perf_counter()
                             tex_data = self.get_current_texture(object.texture, idx)
-                            texture_total_time += time.perf_counter() - start_texture
+                            texture_fetch_time += time.perf_counter() - start_tex
+                            
                             start_draw_triangle = time.perf_counter()
                             self.draw_triangle(pixels, tex_data, surface.get_size(), *projected, object.N, originals, object.light)
                             draw_triangle_total_time += time.perf_counter() - start_draw_triangle
                         else:
                             pygame.gfxdraw.filled_polygon(surface, projected, object.fill_color)
-                display_total_time += time.perf_counter() - start_display
         finally:
             pixels = None
 
-            logger.debug(f"DISPLAY {object} | Clipping: {clipping_total_time:.4f}s | Display: {display_total_time:.4f}s | draw_triangle: {draw_triangle_total_time:.4f}s | Proj perspective: {proj_perspective_total_time:.4f}s | Texture: {texture_total_time:.4f}s")
+            total_time = world_to_camera_time + clipping_check_time + actual_clipping_time + triangulation_time + projection_time + texture_fetch_time + draw_triangle_total_time
+            
+            logger.debug(f"DISPLAY {object} | Total: {total_time:.4f}s")
+            logger.debug(f"  ├─ World→Camera: {world_to_camera_time:.4f}s ({world_to_camera_time/total_time*100:.1f}%)")
+            logger.debug(f"  ├─ Clipping check: {clipping_check_time:.4f}s ({clipping_check_time/total_time*100:.1f}%)")
+            logger.debug(f"  ├─ Clipping: {actual_clipping_time:.4f}s ({actual_clipping_time/total_time*100:.1f}%)")
+            logger.debug(f"  ├─ Triangulation: {triangulation_time:.4f}s ({triangulation_time/total_time*100:.1f}%)")
+            logger.debug(f"  └─ Draw triangle: {draw_triangle_total_time:.4f}s ({draw_triangle_total_time/total_time*100:.1f}%)")
 
     def draw_triangle(self, pixels: pygame.surfarray.pixels3d, tex_data: tuple, surface_size: tuple, v1: Point, v2: Point, v3: Point, n_tex:int, originals: list = None, display_light: bool = True ):
         if originals is None:

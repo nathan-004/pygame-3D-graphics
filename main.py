@@ -1,5 +1,7 @@
 from src.main_loop import main
+
 from src.render.camera import draw_triangle_numba
+from src.render.utils import fast_intersect_near
 
 import numpy as np
 
@@ -32,12 +34,15 @@ def warmup_numba():
         dummy_lights,
         dummy_vec, dummy_vec, dummy_vec
     )
+
+    fast_intersect_near((0,0,1,0,0), (0,0,0,0,0), 1)
+
     print("Numba compilation terminée.")
 
 if __name__ == "__main__":
     logger = logging.getLogger(__name__)
     logging.basicConfig(
-        level=logging.WARNING,
+        level=logging.DEBUG,
         format='%(name)s - %(levelname)s - %(message)s'
     ) # https://docs.python.org/3/library/logging.html#levels
 
