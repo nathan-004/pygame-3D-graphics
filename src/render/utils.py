@@ -256,6 +256,17 @@ def rotate_point(p: Point, rotation_matrix: list) -> Point:
         p.u, p.v
     )
 
+def get_center(points: list[Point]) -> Point:
+    x, y, z = 0, 0, 0
+    n = len(points)
+
+    for p in points:
+        x += p.x
+        y += p.y
+        z += p.z
+
+    return Point(x/n, y/n, z/n)
+
 class Object:
     def __init__(self, vertices:list, edges:list, faces:list, pos: Point, fill_color: pygame.Color = None, texture: pygame.Surface = None, n_repetition:int = 1, light: bool = True):
         if type(fill_color) is list:
@@ -264,6 +275,7 @@ class Object:
             assert len(texture) == len(faces), "Nombre de textures spécifiés différents du nombre de faces"
         
         self._vertices = vertices
+        self._initial_vertices = deepcopy(vertices)
         self.edges = edges
         self.pos = pos
         self.faces = faces
@@ -275,7 +287,7 @@ class Object:
     @property
     def points(self):
         return [Point(point.x + self.pos.x, point.y + self.pos.y, point.z + self.pos.z, point.u, point.v) for point in self._vertices]
-    
+
     @property
     def height(self):
         return max([p.y for p in self.points])
@@ -296,6 +308,21 @@ class Object:
         
         faces = res["faces"]
         return Object(vertices, [], faces, pos, fill_color, texture)
+    
+def rotate_toward(obj: Object, point: Point):
+    dx = obj.pos.x - point.x
+    dz = obj.pos.z - point.z
+
+    angle_to_point = atan2(dz, dx) - pi/2
+
+    current_angle = normalize_angle(angle_to_point)
+    obj._vertices = deepcopy(obj._initial_vertices)
+
+    center = get_center(obj._vertices) * Point(1, 0, 0)
+
+    obj.transformation(
+        lambda x: rotate_point(x - center, get_y_rotation_matrix(-current_angle)) + center
+    )
 
 class Light:
     def __init__(self, pos:Point, intensity:float = 0.5, radius:float = 7, color:tuple = (1,1,1)):
@@ -529,7 +556,7 @@ class Ennemy(Element):
 
         self.pos = object.pos
 
-        self.speed = 0.05
+        self.speed = 0.02
         self.rotation_frames = 1
         self.current_angle = pi
 
@@ -537,21 +564,7 @@ class Ennemy(Element):
         super().__init__([self.object])
 
     def tick(self):
-        dx = self.pos.x - self.camera.origine.x
-        dz = self.pos.z - self.camera.origine.z
-
-        angle_to_camera = atan2(dz, dx) + pi/2
-
-        # Rotation vers la caméra
-        angle_diff = normalize_angle(angle_to_camera - self.current_angle)
-        self.current_angle = normalize_angle(self.current_angle + angle_diff / self.rotation_frames)
-
-        self.object._vertices = deepcopy(self._initial_vertices)
-
-        center = Point(self.object.height * 0.5, 0, 0)
-        self.object.transformation(
-            lambda x: rotate_point(x - center, get_y_rotation_matrix(-self.current_angle)) + center
-        )
+        rotate_toward(self.object, self.camera.origine)
 
         # Avancer vers joueur
         dx = self.camera.origine.x - self.pos.x - 1.5

@@ -82,12 +82,10 @@ sign = Sign.from_text("Ceci EST un TEST puissant", Point(1, 1, 3), support=True)
 ennemy_render = EnnemyRender(Square(3, Point(1,0,4), texture=BAT_TEXTURE), camera)
 world = get_cubes(map) + torches + [sign] + [ennemy_render] # [test_obj]
 
-ennemy_test = Object.from_file("assets/TEST.obj", Point(L*1, 0, L*3), texture=TEST_TEXTURE)
+ennemy_test = Object.from_file("assets/TEST.obj", Point(L*3, 0, L*3), texture=TEST_TEXTURE)
 print(len(ennemy_test._vertices), len(ennemy_test.faces))
-ennemy_test.light = False 
+ennemy_test.light = False
 fight_monster = EnnemyRender(ennemy_test, camera)
-fight_monster.tick()
-fight_monster.object.transformation(lambda x: x * 1)
 fight_monster_entity = Ennemy('Vilain Test', 100, 1, 0.1, fight_monster)
 
 fight_room = Cuboid(
@@ -123,6 +121,7 @@ def get_text_button(text, key: int,  f: Callable, pos:tuple, color1: tuple = (25
 params = {}
 
 f = 0
+
 @main_3D(window, camera, map, params)
 def main():
     global f
@@ -171,8 +170,11 @@ def main():
 
             skills_button = get_text_button("(X)SKILLS", pygame.K_x, lambda : print("SKILLS"), (480, 550))
             
-            params["ennemy_health_bar"] = Rectangle(3, 10, fight_monster.pos + Point(5, 10, 0), texture=fight_monster.object.texture)
+            params["ennemy_health_bar"] = Rectangle(2.5, 10, fight_monster.pos + Point(-5, L*2 + 1, 0), texture=fight_monster.object.texture)
             params["ennemy_health_bar"].light = False
+
+            rotate_toward(params["ennemy_health_bar"], camera.origine)
+            rotate_toward(fight_monster_entity.ennemy_render.objects[0], camera.origine)
         
         params["ennemy_health_bar"].texture = get_bar(fight_monster_entity.life, fight_monster_entity.max_life, (255, 0, 0), (58, 235, 52))
         camera.draw_world(window, fight_scene + [ennemy_light, player_light, params["ennemy_health_bar"]], max_distance=L*6)
