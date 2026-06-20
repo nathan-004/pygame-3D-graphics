@@ -154,7 +154,7 @@ def main():
             start = params["start_frame"]
             end = window.copy()
             camera.pitch = 0
-            camera.yaw = 0.5
+            camera.yaw = 0.75
             camera.draw_world(end, fight_scene + [ennemy_light, player_light], max_distance=L*6)
             fire_transition(window, start, end)
             params["transition"] = False
@@ -173,7 +173,7 @@ def main():
             params["ennemy_health_bar"] = Rectangle(2.5, 10, fight_monster.pos + Point(-5, L*2 + 1, 0), texture=fight_monster.object.texture)
             params["ennemy_health_bar"].light = False
 
-            rotate_toward(params["ennemy_health_bar"], camera.origine)
+            rotate_toward(params["ennemy_health_bar"], camera.origine, reverse=True)
             rotate_toward(fight_monster_entity.ennemy_render.objects[0], camera.origine)
         
         params["ennemy_health_bar"].texture = get_bar(fight_monster_entity.life, fight_monster_entity.max_life, (255, 0, 0), (58, 235, 52))

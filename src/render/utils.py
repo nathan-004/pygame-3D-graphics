@@ -309,11 +309,12 @@ class Object:
         faces = res["faces"]
         return Object(vertices, [], faces, pos, fill_color, texture)
     
-def rotate_toward(obj: Object, point: Point):
+def rotate_toward(obj: Object, point: Point, reverse = False):
     dx = obj.pos.x - point.x
     dz = obj.pos.z - point.z
 
-    angle_to_point = atan2(dz, dx) - pi/2
+    coeff = 1 if not reverse else -1
+    angle_to_point = atan2(dz, dx) + pi/2 * coeff
 
     current_angle = normalize_angle(angle_to_point)
     obj._vertices = deepcopy(obj._initial_vertices)
