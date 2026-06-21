@@ -81,7 +81,7 @@ sign = Sign.from_text("Ceci EST un TEST puissant", Point(1, 1, 3), support=True)
 ennemy_render = EnnemyRender(Square(3, Point(1,0,4), texture=BAT_TEXTURE), camera)
 world = get_cubes(map) + torches + [sign] + [ennemy_render] # [test_obj]
 
-ennemy_test = Object.from_file("assets/TEST.obj", Point(L*3, 0, L*3), texture=TEST_TEXTURE)
+ennemy_test = Object.from_file("assets/TEST.obj", Point(L*3, L, L*3), texture=TEST_TEXTURE)
 print(len(ennemy_test._vertices), len(ennemy_test.faces))
 ennemy_test.light = False
 fight_monster = EnnemyRender(ennemy_test, camera)
@@ -179,7 +179,7 @@ def main():
         params["ennemy_health_bar"].texture = get_bar(fight_monster_entity.life, fight_monster_entity.max_life, (255, 0, 0), (58, 235, 52))
         camera.draw_world(window, fight_scene + [ennemy_light, player_light, params["ennemy_health_bar"]], max_distance=L*6)
         
-        fight_monster.object.transformation(lambda p: rotate_point(p, get_y_rotation_matrix(0.1)), monster_parts.head)
+        fight_monster.object.transformation(lambda p: rotate_point(p, get_x_rotation_matrix(0.1)), monster_parts.left_arm)
 
         for b in buttons.CURRENT_BUTTONS:
             b.display(window)

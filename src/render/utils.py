@@ -20,6 +20,7 @@ class Bbox(NamedTuple):
 class HumanBody(NamedTuple):
     """Contient des listes avec les index de chaque vecrtices comprises dans chaque partie du corps"""
     head: list[int]
+    left_arm: list[int]
 
 def get_x_rotation_matrix(theta) -> list:
     return [
@@ -279,6 +280,31 @@ def get_center(points: list[Point]) -> Point:
 
     return Point(x/n, y/n, z/n)
 
+def get_bbox(vertices: list[Point]):
+        min_x, min_y, min_z = 0, 0, 0
+        max_x, max_y, max_z = 0, 0, 0
+
+        for p in vertices:
+            if p.x < min_x:
+                min_x = p.x
+            elif p.x > max_x:
+                max_x = p.x
+            
+            if p.y < min_y:
+                min_y = p.y
+            elif p.y > max_y:
+                max_y = p.y
+    
+            if p.z < min_z:
+                min_z = p.z
+            elif p.z > max_z:
+                max_z = p.z
+
+        return Bbox(
+            min_x, min_y, min_z,
+            max_x, max_y, max_z
+        )
+
 class Object:
     def __init__(self, vertices:list, edges:list, faces:list, pos: Point, fill_color: pygame.Color = None, texture: pygame.Surface = None, n_repetition:int = 1, light: bool = True):
         if type(fill_color) is list:
@@ -306,29 +332,7 @@ class Object:
     
     @property
     def bbox(self) -> Bbox:
-        min_x, min_y, min_z = 0, 0, 0
-        max_x, max_y, max_z = 0, 0, 0
-
-        for p in self.points:
-            if p.x < min_x:
-                min_x = p.x
-            elif p.x > max_x:
-                max_x = p.x
-            
-            if p.y < min_y:
-                min_y = p.y
-            elif p.y > max_y:
-                max_y = p.y
-    
-            if p.z < min_z:
-                min_z = p.z
-            elif p.z > max_z:
-                max_z = p.z
-
-        return Bbox(
-            min_x, min_y, min_z,
-            max_x, max_y, max_z
-        )
+        return get_bbox(self._initial_vertices)
 
     def transformation(self, f: Callable, indexs: list[int] = None):
         if indexs is None:
@@ -347,22 +351,46 @@ class Object:
         
         points, uvs = res["vertices"], res["uvs"]
         vertices = [Point(*tuple(vertice + uv)) for vertice, uv in zip(points, uvs)]
-        
+
+        bbox = get_bbox(vertices)
+
+        center_x = (bbox.min_x + bbox.max_x) / 2
+        center_y = (bbox.min_y + bbox.max_y) / 2
+        center_z = (bbox.min_z + bbox.max_z) / 2
+
+        vertices = [
+            Point(
+                p.x - center_x,
+                p.y - center_y,
+                p.z - center_z,
+                p.u,
+                p.v
+            )
+            for p in vertices
+        ]
+
         faces = res["faces"]
         return Object(vertices, [], faces, pos, fill_color, texture)
     
     def get_human_parts(self) -> HumanBody:
         """Renvoie les différentes parties de l'objet"""
         head = []
+        left_arm = []
+
         bbox = self.bbox
+        print(bbox)
         h = bbox.max_y - bbox.min_y
+        w = bbox.max_x - bbox.min_x
 
         for i, p in enumerate(self._initial_vertices):
             if p.y - bbox.min_y >= 6/7 * h:
                 head.append(i)
+            if p.x - bbox.min_x <= 13/40 * w:
+                left_arm.append(i)
         
         return HumanBody(
-            head
+            head,
+            left_arm
         )
     
 def rotate_toward(obj: Object, point: Point, reverse = False):
