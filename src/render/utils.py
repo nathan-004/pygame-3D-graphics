@@ -9,6 +9,18 @@ from copy import deepcopy
 from src.render.text import correct_text_placement
 from src.constants import L, TORCH_TEXTURE, DISPLAY_SIGN, SUPPORT_SIGN
 
+class Bbox(NamedTuple):
+    min_x: float
+    min_y: float
+    min_z: float
+    max_x: float
+    max_y: float
+    max_z: float
+
+class HumanBody(NamedTuple):
+    """Contient des listes avec les index de chaque vecrtices comprises dans chaque partie du corps"""
+    head: list[int]
+
 def get_x_rotation_matrix(theta) -> list:
     return [
         [1, 0, 0],
@@ -292,9 +304,39 @@ class Object:
     def height(self):
         return max([p.y for p in self.points])
     
-    def transformation(self, f: Callable):
-        for idx, p in enumerate(self._vertices):
-            self._vertices[idx] = f(p)
+    @property
+    def bbox(self) -> Bbox:
+        min_x, min_y, min_z = 0, 0, 0
+        max_x, max_y, max_z = 0, 0, 0
+
+        for p in self.points:
+            if p.x < min_x:
+                min_x = p.x
+            elif p.x > max_x:
+                max_x = p.x
+            
+            if p.y < min_y:
+                min_y = p.y
+            elif p.y > max_y:
+                max_y = p.y
+    
+            if p.z < min_z:
+                min_z = p.z
+            elif p.z > max_z:
+                max_z = p.z
+
+        return Bbox(
+            min_x, min_y, min_z,
+            max_x, max_y, max_z
+        )
+
+    def transformation(self, f: Callable, indexs: list[int] = None):
+        if indexs is None:
+            for idx, p in enumerate(self._vertices):
+                self._vertices[idx] = f(p)
+        else:
+            for idx in indexs:
+                self._vertices[idx] = f(self._vertices[idx])
 
     @staticmethod
     def from_file(file_path: str, pos: Point, fill_color: pygame.Color = None, texture: pygame.Surface = None):
@@ -308,6 +350,20 @@ class Object:
         
         faces = res["faces"]
         return Object(vertices, [], faces, pos, fill_color, texture)
+    
+    def get_human_parts(self) -> HumanBody:
+        """Renvoie les différentes parties de l'objet"""
+        head = []
+        bbox = self.bbox
+        h = bbox.max_y - bbox.min_y
+
+        for i, p in enumerate(self._initial_vertices):
+            if p.y - bbox.min_y >= 6/7 * h:
+                head.append(i)
+        
+        return HumanBody(
+            head
+        )
     
 def rotate_toward(obj: Object, point: Point, reverse = False):
     dx = obj.pos.x - point.x
