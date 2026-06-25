@@ -17,10 +17,19 @@ class Bbox(NamedTuple):
     max_y: float
     max_z: float
 
+class BodyPart(list):
+    def __init__(self, iterable, pivot):
+        self.pivot = pivot
+        self.rotation = {
+            "x":0, "y": 0, "z": 0
+        }
+
+        super().__init__(iterable)
+
 class HumanBody(NamedTuple):
     """Contient des listes avec les index de chaque vecrtices comprises dans chaque partie du corps"""
-    head: list[int]
-    left_arm: list[int]
+    head: BodyPart
+    left_arm: BodyPart
 
 def get_x_rotation_matrix(theta) -> list:
     return [
@@ -306,6 +315,12 @@ def get_bbox(vertices: list[Point]):
         )
 
 class Object:
+    ROTATIONS = {            
+        "x": get_x_rotation_matrix,
+        "y": get_y_rotation_matrix,
+        "z": get_z_rotation_matrix
+    }
+
     def __init__(self, vertices:list, edges:list, faces:list, pos: Point, fill_color: pygame.Color = None, texture: pygame.Surface = None, n_repetition:int = 1, light: bool = True):
         if type(fill_color) is list:
             assert len(fill_color) == len(faces), "Nombre de couleurs différent du nombre de faces"
@@ -321,6 +336,10 @@ class Object:
         self.texture = texture
         self.N = n_repetition
         self.light = light
+        self.rotation = {
+            "x":0, "y": 0, "z": 0
+        }
+        self.body_parts = self.get_human_parts()
 
     @property
     def points(self):
@@ -388,11 +407,57 @@ class Object:
             if p.x - bbox.min_x <= 13/40 * w:
                 left_arm.append(i)
         
+        head_bbox = get_bbox([self._vertices[idx] for idx in head])
+        left_arm_bbox = get_bbox([self._vertices[idx] for idx in left_arm])
         return HumanBody(
-            head,
-            left_arm
+            BodyPart(head, Point((head_bbox.max_x + head_bbox.min_x)/2, head_bbox.min_y, head_bbox.min_z)),
+            BodyPart(left_arm, Point(left_arm_bbox.max_x, (left_arm_bbox.max_y+left_arm_bbox.min_y)/2, left_arm_bbox.min_z))
         )
     
+    def rotate(
+        self,
+        angle,
+        axis: str,
+        indexes: Optional[BodyPart] = None,
+        pivot: Optional[Point] = None
+    ):
+        if indexes is not None:
+            indexes.rotation[axis] += angle
+        else:
+            self.rotation[axis] += angle
+
+        self._vertices = deepcopy(self._initial_vertices)
+
+        for part in self.body_parts:
+            for ax, a in part.rotation.items():
+                if a == 0:
+                    continue
+
+                part_pivot = part.pivot
+
+                self.transformation(
+                    lambda p, ax=ax, a=a:
+                        rotate_point(
+                            p - part_pivot,
+                            self.ROTATIONS[ax](a)
+                        ) + part_pivot,
+                    part
+                )
+
+        global_pivot = pivot if pivot else Point(0,0,0)
+
+        for ax, a in self.rotation.items():
+            if a == 0:
+                continue
+
+            self.transformation(
+                lambda p, ax=ax, a=a:
+                    rotate_point(
+                        p - global_pivot,
+                        self.ROTATIONS[ax](a)
+                    ) + global_pivot
+            )
+
 def rotate_toward(obj: Object, point: Point, reverse = False):
     dx = obj.pos.x - point.x
     dz = obj.pos.z - point.z
@@ -405,9 +470,7 @@ def rotate_toward(obj: Object, point: Point, reverse = False):
 
     center = get_center(obj._vertices) * Point(1, 0, 0)
 
-    obj.transformation(
-        lambda x: rotate_point(x - center, get_y_rotation_matrix(-current_angle)) + center
-    )
+    obj.rotate(-current_angle, "y", pivot=center)
 
 class Light:
     def __init__(self, pos:Point, intensity:float = 0.5, radius:float = 7, color:tuple = (1,1,1)):

@@ -170,7 +170,7 @@ def main():
 
             skills_button = get_text_button("(X)SKILLS", pygame.K_x, lambda : print("SKILLS"), (480, 550))
             
-            params["ennemy_health_bar"] = Rectangle(2.5, 10, fight_monster.pos + Point(-5, L*2 + 1, 0), texture=fight_monster.object.texture)
+            params["ennemy_health_bar"] = Rectangle(2.5, 10, fight_monster.pos + Point(-5, L + 1, 0), texture=fight_monster.object.texture)
             params["ennemy_health_bar"].light = False
 
             rotate_toward(params["ennemy_health_bar"], camera.origine, reverse=True)
@@ -179,7 +179,8 @@ def main():
         params["ennemy_health_bar"].texture = get_bar(fight_monster_entity.life, fight_monster_entity.max_life, (255, 0, 0), (58, 235, 52))
         camera.draw_world(window, fight_scene + [ennemy_light, player_light, params["ennemy_health_bar"]], max_distance=L*6)
         
-        fight_monster.object.transformation(lambda p: rotate_point(p, get_x_rotation_matrix(0.1)), monster_parts.left_arm)
+        fight_monster.object.rotate(-0.1, "z", fight_monster.object.body_parts.left_arm)
+        #fight_monster.object.transformation(lambda p: rotate_point(p - min_, get_y_rotation_matrix(-0.1)) + min_, monster_parts.left_arm)
 
         for b in buttons.CURRENT_BUTTONS:
             b.display(window)
